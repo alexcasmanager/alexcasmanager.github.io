@@ -1,0 +1,660 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Александр Винокуров - Операционный менеджер & Антифрод</title>
+
+  <!-- Я не дизайнер и не верстальщик, лучше в код не смотреть 😢 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="" crossorigin="anonymous"/>
+
+  <!-- Animate.css -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+
+  <style>
+    :root {
+      --fb-blue: #1877f2;
+      --fb-light-bg: #f0f2f5;   /* общий фон */
+      --fb-surface: #ffffff;    /* фон карточек/секций */
+      --fb-border: #d9dde1;     /* рамки блоков */
+      --muted: #000000;         /* вторичный текст */
+      --accent-gradient: linear-gradient(90deg, var(--fb-blue) 0%, #6c5ce7 100%);
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--fb-light-bg);
+      color: #050505;
+      font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      scroll-behavior: smooth;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      background: var(--fb-surface);
+      border-right: 1px solid var(--fb-border);
+      min-width: 260px;
+      max-width: 260px;
+      color: #050505;
+    }
+
+    /* Cards / surfaces */
+    .surface {
+      background: var(--fb-surface);
+      border: 1px solid var(--fb-border);
+      border-radius: 12px;
+    }
+
+    /* Feature title */
+    .feature-title {
+      color: var(--fb-blue);
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    /* Gradient buttons */
+    .btn-gradient {
+      background: var(--fb-blue);
+      color: white;
+    }
+
+    .btn-outline {
+      border: 1px solid var(--fb-border);
+      color: var(--fb-blue);
+      background: transparent;
+    }
+
+    /* Pulsing indicator (header) */
+    .pulse {
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      background: linear-gradient(90deg,var(--fb-blue),#7c3aed);
+      box-shadow: 0 0 12px rgba(124,58,237,0.12);
+      position: relative;
+    }
+    .pulse::after{
+      content:'';
+      position:absolute;
+      left:50%; top:50%;
+      width:100%; height:100%;
+      transform:translate(-50%,-50%);
+      border-radius:999px;
+      animation: pulseAnim 2s infinite;
+      background: radial-gradient(circle, rgba(24,119,242,0.12), transparent 40%);
+      opacity: 0.7;
+      filter: blur(6px);
+    }
+    @keyframes pulseAnim {
+      0% { transform: translate(-50%,-50%) scale(.9); opacity: .6; }
+      60% { transform: translate(-50%,-50%) scale(1.6); opacity: 0; }
+      100% { transform: translate(-50%,-50%) scale(.9); opacity: 0; }
+    }
+
+    /* Clients marquee / infinite scroll */
+    .clients-track {
+      display:flex;
+      gap:28px;
+      align-items:center;
+      animation: scrollLeft 18s linear infinite;
+    }
+    @keyframes scrollLeft {
+      0% { transform: translateX(0%); }
+      100% { transform: translateX(-50%); } /* duplicated content creates seamless loop */
+    }
+
+    /* Case card hover */
+    .case-card:hover { 
+      transform: translateY(-6px); 
+      box-shadow: 0 8px 30px rgba(2,6,23,0.3); 
+    }
+
+    /* Fade-in helper */
+    .animate-fade-in {
+      opacity: 0;
+      transform: translateY(12px);
+      transition: all .7s cubic-bezier(.2,.9,.2,1);
+    }
+    .in-view {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Sidebar profile */
+    .side-photo {
+      width: 100%;
+      height: 100%;
+      aspect-ratio: 1 / 1;
+      border-radius: 12px;
+      object-fit: cover;
+      display: block;
+    }
+
+
+    /* Contact blocks in sidebar */
+    .contact-block {
+      background: var(--fb-surface);
+      border: 1px solid var(--fb-border);
+      padding: 10px;
+      border-radius: 10px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      color: #050505;
+    }
+    header {
+      background: var(--fb-surface);
+      border-bottom: 1px solid var(--fb-border);
+    }
+    /* Adjustments on small screens */
+    @media (max-width: 768px){
+      .sidebar { min-width: 220px; max-width: 220px; position: fixed; left: 8px; top: 8px; bottom: 8px; border-radius: 12px; z-index:60; }
+      main { margin-left: 240px; }
+      header { left: 240px; right: 0; }
+      .clients-track { animation-duration: 28s; }
+    }
+
+    @media (max-width: 480px){
+      .sidebar { min-width:200px; max-width:200px; padding:16px; }
+      main { margin-left: 220px; padding: 18px; }
+    }
+
+    .transition-smooth { transition: transform .18s ease, box-shadow .18s ease; }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar (fixed left) -->
+  <aside class="sidebar fixed top-0 left-0 bottom-0 p-6 flex flex-col justify-between text-sm">
+    <div>
+      <!-- Profile (широкая фото-баннер) -->
+      <div class="mb-4">
+        <div class="w-full rounded-lg overflow-hidden surface p-3">
+          <!-- большой блок фото-заглушка -->
+          <img src="ava.jpg" alt="Александр Винокуров" class="side-photo" />
+        </div>
+      </div>
+<br>
+      <!-- Nav -->
+      <nav class="mt-2 mb-6">
+        <ul class="space-y-2">
+          <li><a href="#about" class="flex items-center gap-3 p-3 rounded-md hover:bg-[rgba(255,255,255,0.02)] transition-smooth"><i class="fa-solid fa-user text-[14px] w-5 text-gray-800"></i><span class="ml-1">О себе</span></a></li>
+          <li><a href="#cases" class="flex items-center gap-3 p-3 rounded-md hover:bg-[rgba(255,255,255,0.02)] transition-smooth"><i class="fa-solid fa-briefcase text-[14px] w-5 text-gray-800"></i><span>Кейсы</span></a></li>
+          <li><a href="#resume" class="flex items-center gap-3 p-3 rounded-md hover:bg-[rgba(255,255,255,0.02)] transition-smooth"><i class="fa-solid fa-file-lines text-[14px] w-5 text-gray-800"></i><span>Резюме</span></a></li>
+        </ul>
+      </nav>
+    </div><br><br><br><br><br>
+
+    <!-- Contacts bottom: блоки по вертикали -->
+    <div class="flex flex-col gap-3">
+      <!-- Telegram -->
+      <a href="https://t.me/Alexfracas" class="contact-block flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50 transition group">
+        <div class="w-10 h-10 flex items-center justify-center rounded-md bg-gray-100 group-hover:bg-[#0088cc] transition">
+          <i class="fa-brands fa-telegram fa-lg text-gray-700 group-hover:text-white"></i>
+        </div>
+        <div class="text-left">
+          <div class="text-sm font-medium text-gray-800">Telegram</div>
+          <div class="text-xs text-gray-600">@Alexfracas</div>
+        </div>
+      </a>
+      <!-- LinkedIn -->
+      <a href="https://www.linkedin.com/in/alexandr-vinokurov-casmanager" class="contact-block flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50 transition group">
+        <div class="w-10 h-10 flex items-center justify-center rounded-md bg-gray-100 group-hover:bg-blue-600 transition">
+          <i class="fa-brands fa-linkedin-in fa-lg text-gray-700 group-hover:text-white"></i>
+        </div>
+        <div class="text-left">
+          <div class="text-sm font-medium text-gray-800">LinkedIn</div>
+          <div class="text-xs text-gray-600">Профиль</div>
+        </div>
+      </a>
+    </div>
+      <div class="text-[11px] text-gray-400 mt-2">© 2025</div>
+    </div>
+  </aside>
+
+  <!-- Header (fixed top) -->
+  <header class="fixed top-0 left-[260px] right-0 h-14 flex items-center px-6 border-b border-[rgba(255,255,255,0.02)] bg-white/90 border-b border-gray-200 backdrop-blur-sm z-50">
+    <div class="flex items-center gap-3">
+      <div class="pulse" aria-hidden="true"></div>
+      <div class="ml-1 text-sm font-mono text-gray-200">#</div>
+    </div>
+
+    <nav class="ml-8 hidden md:flex items-center gap-6 text-sm">
+      <a href="#about" class="hover:text-white text-gray-800">О себе</a>
+      <a href="#cases" class="hover:text-white text-gray-800">Кейсы</a>
+      <a href="#resume" class="hover:text-white text-gray-800">Резюме</a>
+    </nav>
+  </header>
+
+  <!-- Main content -->
+  <main class="min-h-screen ml-[260px] pt-20 pb-24 px-10">
+
+    <!-- Hero -->
+    <section id="hero" class="relative mb-5">
+      <div class="rounded-2xl overflow-hidden p-8 surface border border-[rgba(255,255,255,0.02)]">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+          <div class="space-y-4">
+            <h1 class="text-4xl md:text-5xl font-extrabold leading-tight">Александр Винокуров</h1>
+            <div class="space-y-1">
+              <div class="feature-title text-2xl md:text-3xl">Операционный менеджер</div>
+              <div class="feature-title text-2xl md:text-3xl">и антифрод-специалист</div>
+            </div>
+
+            <p class="text-gray-800 max-w-xl mt-4">Я оптимизирую операционные процессы в iGaming: от автоматизации рутины до настройки антифрода. Мои решения повышают KPI, уменьшают риски и экономят время команды</p>
+
+            <div class="mt-6 flex gap-3">
+              <a href="#cases" class="inline-flex items-center gap-2 btn-gradient px-4 py-2 rounded-md font-semibold transition transform hover:scale-105">
+                <i class="fa-solid fa-folder-open"></i> Мои кейсы
+              </a>
+              <a href="CV_Alex_Vinokurov_Ru.pdf" class="inline-flex items-center gap-2 btn-outline px-4 py-2 rounded-md font-medium transition">
+                <i class="fa-solid fa-download"></i> Скачать резюме (PDF)
+              </a>
+            </div>
+          </div>
+
+          <div class="flex justify-center">
+            <div class="flex items-center justify-center w-64 h-64">
+              <img src="icon.png" alt="Александр Винокуров" class="w-full h-auto rounded-lg" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- About -->
+    <section id="about" class="mb-5">
+      <h2 class="text-2xl font-semibold mb-4">О себе</h2>
+      <div class="surface p-6 rounded-xl border border-[rgba(255,255,255,0.02)]">
+        <p class="text-gray-800 leading-relaxed text-lg">Я операционный менеджер и антифрод-аналитик с опытом работы более четырех лет. Программирование и нейросети - мои хобби, что отлично сочетается с моим постоянным стремлением улучшать, упрощать и автоматизировать рабочие процессы. Готов рассматривать варианты работы в офисе, гибридного формата или с релокацией</p>
+      </div>
+    </section>
+
+    <!-- Cases (unchanged) -->
+    <section id="cases" class="mb-5">
+      <h2 class="text-2xl font-semibold mb-2">Кейсы</h2>
+      <p class="text-gray-400 mb-6">Реальные задачи, которые я решал. Каждый кейс - это экономия времени, снижение рисков или рост KPI</p>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Reuse the same 8 case cards from previous version -->
+        <!-- 1 -->
+        <article class="case-card surface p-5 rounded-xl transition-smooth animate-fade-in">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background:linear-gradient(90deg,var(--fb-blue),#6c5ce7);">
+              <i class="fa-solid fa-magnifying-glass text-white"></i>
+            </div>
+            <div>
+              <div class="text-xs text-gray-800">Product|Marketing</div>
+              <h3 class="text-lg font-semibold feature-title">Парсер чатов с определителем профессий</h3>
+            </div>
+          </div>
+          <div class="mt-3 text-sm text-gray-800 space-y-2">
+            <div><strong>Задача:</strong> Нужно было быстро находить и контактировать с владельцами казино, аффилиейтами и работниками на аутсорс в Telegram, но вручную это занимало часы</div>
+            <div><strong>Решение:</strong> Разработал скрипт, который парсит контакты из чатов, проверяет описания по собранному словарю профессий и фильтрует по ключевым словам и экспортирует в CSV</div>
+            <div><strong>Результат:</strong> Сократил время поиска партнеров с 8 часов до 30 минут в неделю</div>
+            <a href="tgparser.html" class="mt-3 inline-block text-sm text-[--fb-blue] hover:underline">Подробнее →</a>
+          </div>
+        </article>
+
+        <!-- 2 -->
+        <article class="case-card surface p-5 rounded-xl transition-smooth animate-fade-in">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background:linear-gradient(90deg,var(--fb-blue),#6c5ce7);">
+              <i class="fa-solid fa-search text-white"></i>
+            </div>
+            <div>
+              <div class="text-xs text-gray-800">Product</div>
+              <h3 class="text-lg font-semibold feature-title">Сканер контента и поисковой выдачи</h3>
+            </div>
+          </div>
+          <div class="mt-3 text-sm text-gray-800 space-y-2">
+            <div><strong>Задача:</strong> Требовался мониторинг репутации бренда и конкурентов в поиске и на сайтах</div>
+            <div><strong>Решение:</strong> Создал инструмент для автоматического сканирования поисковой выдачи Google и Yandex и контента сайтов с анализом упоминаний и эмоционального контекста</div>
+            <div><strong>Результат:</strong> Утилита сэкономила десятки человекочасов в отделе маркетинга и нашла даже самые локальные упоминания</div>
+          </div>
+        </article>
+
+        <!-- 3 -->
+        <article class="case-card surface p-5 rounded-xl transition-smooth animate-fade-in">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background:linear-gradient(90deg,var(--fb-blue),#6c5ce7);">
+              <i class="fa-solid fa-robot text-white"></i>
+            </div>
+            <div>
+              <div class="text-xs text-gray-800">Retention</div>
+              <h3 class="text-lg font-semibold feature-title">Telegram Casino Bot</h3>
+            </div>
+          </div>
+          <div class="mt-3 text-sm text-gray-800 space-y-2">
+            <div><strong>Задача:</strong> Нужно было повысить удержание игроков</div>
+            <div><strong>Решение:</strong> Запустил в Telegram мини-казино с системой баллов, подписавшиеся пользователи получали в определенные дни баллы, за которые игроки получали бонусы. Управление - через второго бота-админку</div>
+            <div><strong>Результат:</strong> Увеличил активность редепозитов на 35% за месяц</div>
+            <a href="casinobot.html" class="mt-3 inline-block text-sm text-[--fb-blue] hover:underline">Подробнее →</a>
+          </div>
+        </article>
+
+        <!-- 4 -->
+        <article class="case-card surface p-5 rounded-xl transition-smooth animate-fade-in">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background:linear-gradient(90deg,var(--fb-blue),#6c5ce7);">
+              <i class="fa-solid fa-rss text-white"></i>
+            </div>
+            <div>
+              <div class="text-xs text-gray-800">Product|SMM</div>
+              <h3 class="text-lg font-semibold feature-title">RSS Parser + Poster</h3>
+            </div>
+          </div>
+          <div class="mt-3 text-sm text-gray-800 space-y-2">
+            <div><strong>Задача:</strong> Нужно было регулярно публиковать новостной контент в одном из проектов, но команда забывала или откладывала</div>
+            <div><strong>Решение:</strong> Настроил автоматическую публикацию новостей из RSS-лент с фильтрацией по ключевым словам, расписанием и обработкой через нейросеть</div>
+            <div><strong>Результат:</strong> Новости стали появляться чаще, что увеличило вовлеченность игроков, SEO и конверсии продукта</div>
+          </div>
+        </article>
+
+        <!-- 5 -->
+        <article class="case-card surface p-5 rounded-xl transition-smooth animate-fade-in">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background:linear-gradient(90deg,var(--fb-blue),#6c5ce7);">
+              <i class="fa-solid fa-icons text-white"></i>
+            </div>
+            <div>
+              <div class="text-xs text-gray-800">Product</div>
+              <h3 class="text-lg font-semibold feature-title">Генератор иконок</h3>
+            </div>
+          </div>
+          <div class="mt-3 text-sm text-gray-800 space-y-2">
+            <div><strong>Задача:</strong> Требовалось быстро создать иконки для слотов под разные категории и провайдеров</div>
+            <div><strong>Решение:</strong> Разработал утилиту, позволившую команде в разы быстрее собирать иконки без Figma/Photoshop конвеерным способом</div>
+            <div><strong>Результат:</strong> Команда создала более 1к иконок за 3 дня</div>
+            <a href="generator.html" class="mt-3 inline-block text-sm text-[--fb-blue] hover:underline">Подробнее →</a>
+          </div>
+        </article>
+
+        <!-- 6 -->
+        <article class="case-card surface p-5 rounded-xl transition-smooth animate-fade-in">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background:linear-gradient(90deg,var(--fb-blue),#6c5ce7);">
+              <i class="fa-solid fa-credit-card text-white"></i>
+            </div>
+            <div>
+              <div class="text-xs text-gray-800">Financial</div>
+              <h3 class="text-lg font-semibold feature-title">Конверсия платежей</h3>
+            </div>
+          </div>
+          <div class="mt-3 text-sm text-gray-800 space-y-2">
+            <div><strong>Ситуация:</strong> Сбор конверсий по платежным реквизитам занимал много времени</div>
+            <div><strong>Решение:</strong> Собрал утилиту для автоматической обработки выгрузок и заполнения Google-таблиц</div>
+            <div><strong>Результат:</strong> Сократил сбор с часа до 15 минут</div>
+          </div>
+        </article>
+
+        <!-- 7 -->
+        <article class="case-card surface p-5 rounded-xl transition-smooth animate-fade-in">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background:linear-gradient(90deg,var(--fb-blue),#6c5ce7);">
+              <i class="fa-solid fa-calculator text-white"></i>
+            </div>
+            <div>
+              <div class="text-xs text-gray-800">Product</div>
+              <h3 class="text-lg font-semibold feature-title">Калькулятор бонусной эмиссии</h3>
+            </div>
+          </div>
+          <div class="mt-3 text-sm text-gray-800 space-y-2">
+            <div><strong>Ситуация:</strong> Сбор подсчета бонусной эмиссии занимал более трех часов</div>
+            <div><strong>Решение:</strong> Создал скрипт, автоматизирующий расчеты и выгрузки в таблицу</div>
+            <div><strong>Результат:</strong> Оптимизировал флоу для Product отдела</div>
+          </div>
+        </article>
+
+        <!-- 8 -->
+        <article class="case-card surface p-5 rounded-xl transition-smooth animate-fade-in">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background:linear-gradient(90deg,var(--fb-blue),#6c5ce7);">
+              <i class="fa-solid fa-gamepad text-white"></i>
+            </div>
+            <div>
+              <div class="text-xs text-gray-800">Retention|SMM</div>
+              <h3 class="text-lg font-semibold feature-title">Информационный бот со слотами</h3>
+            </div>
+          </div>
+          <div class="mt-3 text-sm text-gray-800 space-y-2">
+            <div><strong>Ситуация:</strong> Маркетинг не знал, какие слоты наиболее привлекательны для игры и постов в соцсети</div>
+            <div><strong>Решение:</strong> Создал Telegram-бота с аналитикой по волатильности, RTP и с собственной формулой привлекательности для игрока</div>
+            <div><strong>Результат:</strong> Ускорил принятие решений, упростил работу маркетинга</div>
+            <a href="slot.html" class="mt-3 inline-block text-sm text-[--fb-blue] hover:underline">Подробнее →</a>
+          </div>
+        </article>
+
+      </div>
+    </section>
+<!--
+    <!-- Clients marquee 
+    <section id="clients" class="mb-14">
+      <h2 class="text-2xl font-semibold mb-4">Я сотрудничал с</h2>
+      <div class="surface rounded-xl p-4 overflow-hidden border border-[rgba(255,255,255,0.02)]">
+        <div class="w-full overflow-hidden">
+          <div class="clients-track will-change-transform">
+            <img src="https://placehold.co/140x48/2b2d2f/ffffff?text=Client+1" alt="" class="h-12 rounded"/>
+            <img src="https://placehold.co/140x48/2b2d2f/ffffff?text=Client+2" alt="" class="h-12 rounded"/>
+            <img src="https://placehold.co/140x48/2b2d2f/ffffff?text=Client+3" alt="" class="h-12 rounded"/>
+            <img src="https://placehold.co/140x48/2b2d2f/ffffff?text=Client+4" alt="" class="h-12 rounded"/>
+            <img src="https://placehold.co/140x48/2b2d2f/ffffff?text=Client+5" alt="" class="h-12 rounded"/>
+            <img src="https://placehold.co/140x48/2b2d2f/ffffff?text=Client+1" alt="" class="h-12 rounded"/>
+            <img src="https://placehold.co/140x48/2b2d2f/ffffff?text=Client+2" alt="" class="h-12 rounded"/>
+            <img src="https://placehold.co/140x48/2b2d2f/ffffff?text=Client+3" alt="" class="h-12 rounded"/>
+            <img src="https://placehold.co/140x48/2b2d2f/ffffff?text=Client+4" alt="" class="h-12 rounded"/>
+            <img src="https://placehold.co/140x48/2b2d2f/ffffff?text=Client+5" alt="" class="h-12 rounded"/>
+          </div>
+        </div>
+      </div>
+    </section>
+-->
+    <!-- Resume + Skills (skills перенесены под резюме и разбиты по категориям) -->
+    <section id="resume" class="mb-14">
+      <h2 class="text-2xl font-semibold mb-4">Резюме</h2>
+
+      <div class="surface p-6 rounded-xl border border-[rgba(255,255,255,0.02)]">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Левая колонка: Опыт работы -->
+          <div>
+            <h3 class="font-semibold text-lg mb-2">Александр Винокуров</h3>
+            <div>
+              <h4 class="font-medium">Опыт работы</h4>
+              <ul class="text-sm text-gray-800 mt-2 space-y-2">
+                <li>
+                  <strong>Middle Operation Manager | Junior Fraud Analyst</strong><br>
+                  Online Casino, Georgia · Jun 2023 – September 2025
+                  <ul class="list-disc ml-5 mt-1 text-gray-800">
+                    <li>Вёл ключевые KPI: конверсия, удержание, убытки от фрода</li>
+                    <li>Управлял играми: сортировка, настройка лобби и витрин, категории</li>
+                    <li>Работал с провайдерами: промо-активности, турниры, бонусные фонды</li>
+                    <li>Проводил когортный анализ и A/B-тесты (GA4, BI)</li>
+                    <li>Разрабатывал бонусные и лояльностные механики (промо, турниры, бонусы)</li>
+                    <li>Настраивал правила и лимиты для антифрода (AML/KYC, мультиаккаунтинг, бонусный абьюз)</li>
+                    <li>Координировал релизы и интеграции (платежи, контент, QA)</li>
+                  </ul>
+                </li>
+
+                <li>
+                  <strong>Middle Operation Manager</strong><br>
+                  Online Casino, Georgia · Aug 2022 – Jun 2023
+                  <ul class="list-disc ml-5 mt-1 text-gray-800">
+                    <li>Курировал KPI по конверсии и удержанию</li>
+                    <li>Управлял ассортиментом игр, создавал витрины и спецкатегории</li>
+                    <li>Организовывал турниры и промо совместно с провайдерами</li>
+                    <li>Разрабатывал бонусные механики и календарь активностей для разных сегментов игроков</li>
+                    <li>Следил за стабильностью платформы, обрабатывал инциденты и улучшал процессы</li>
+                  </ul>
+                </li>
+
+                <li>
+                  <strong>Junior Operation Manager</strong><br>
+                  Online Casino, Georgia · Apr 2022 – Aug 2022
+                  <ul class="list-disc ml-5 mt-1 text-gray-800">
+                    <li>Вёл ежедневные и еженедельные метрики: регистрации, логины, бонусы, депозиты и выводы</li>
+                    <li>Тестировал новые функции (ручное QA) и проверял соответствие стандартам UX</li>
+                    <li>Поддерживал стабильную работу платформы во время пиковых нагрузок</li>
+                    <li>Отслеживал и фиксировал баги, взаимодействовал с техподдержкой</li>
+                  </ul>
+                </li>
+
+                <li>
+                  <strong>Supervisor | Manager</strong><br>
+                  Optimal Play Tech, Moscow · Dec 2020 – Jul 2021
+                  <ul class="list-disc ml-5 mt-1 text-gray-800">
+                    <li>Руководил командой операторов (обучение, контроль эффективности)</li>
+                    <li>Внедрял отчётность по KPI, обеспечивал коммуникацию с техкомандами</li>
+                  </ul>
+                </li>
+
+                <li>
+                  <strong>Poker Bot Operator</strong><br>
+                  Optimal Play Tech, Moscow · Aug 2020 – Dec 2020
+                  <ul class="list-disc ml-5 mt-1 text-gray-800">
+                    <li>Поддержка игровых ботов, мониторинг и фиксация аномалий</li>
+                    <li>Сбор данных и базовый анализ</li>
+                  </ul>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Правая колонка: Навыки → Образование → Кнопка -->
+          <div>
+            <!-- Навыки - вертикально, 4 карточки друг под другом, суженные и прижатые к правому краю -->
+            <div class="space-y-4">
+              <div class="mr-auto" style="width: calc(50% - 1rem)">
+                <div class="surface p-4 rounded-lg border border-gray-200">
+                  <h5 class="font-semibold mb-2">📊 Продукт и операции</h5>
+                  <ul class="text-sm text-gray-800 space-y-1">
+                    <li>Операционное управление</li>
+                    <li>Работа с игровым контентом</li>
+                    <li>Бонусные механики</li>
+                    <li>Организация промо и турниров</li>
+                    <li>Взаимодействие с провайдерами и PSP</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="mr-auto" style="width: calc(50% - 1rem)">
+                <div class="surface p-4 rounded-lg border border-gray-200">
+                  <h5 class="font-semibold mb-2">📈 Аналитика и данные</h5>
+                  <ul class="text-sm text-gray-800 space-y-1">
+                    <li>GA4 & Product Analytics</li>
+                    <li>BI Dashboards</li>
+                    <li>Когортный анализ</li>
+                    <li>A/B тестирование</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="mr-auto" style="width: calc(50% - 1rem)">
+                <div class="surface p-4 rounded-lg border border-gray-200">
+                  <h5 class="font-semibold mb-2">🛠 Технические навыки</h5>
+                  <ul class="text-sm text-gray-800 space-y-1">
+                    <li>API интеграции</li>
+                    <li>QA & релизы</li>
+                    <li>Python (аналитика и автоматизация)</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="mc-auto" style="width: calc(50% - 1rem)">
+                <div class="surface p-4 rounded-lg border border-gray-200">
+                  <h5 class="font-semibold mb-2">🛡 Антифрод и риски</h5>
+                  <ul class="text-sm text-gray-800 space-y-1">
+                    <li>AML / KYC</li>
+                    <li>Мультиаккаунтинг</li>
+                    <li>Бонусный абьюз</li>
+                    <li>Фрод-убытки и риск-менеджмент</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Образование -->
+            <div class="mt-6">
+              <h4 class="font-medium mb-2">Образование</h4>
+              <p class="text-sm text-gray-800">СПБ ГУТ им. проф. М. А. Бонч-Бруевича - Бизнес-информатика</p>
+            </div>
+
+            <!-- Кнопка -->
+            <div class="mt-6">
+              <a href="CV_Alex_Vinokurov_Ru.pdf" 
+                download 
+                class="btn-outline px-4 py-2 rounded-md text-sm">
+                Скачать резюме (PDF)
+              </a>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- Footer -->
+    <footer class="mt-10 text-sm text-gray-500">
+      <div class="flex items-center justify-between">
+        <div>© 2025 Alexander Vinokurov - Операционный менеджмент и антифрод</div>
+        <div class="space-x-4">
+          <a href="#" class="hover:text-white">Политика конфиденциальности</a>
+          <a href="#" class="hover:text-white">Условия #</a>
+        </div>
+      </div>
+    </footer>
+
+  </main>
+
+  <!-- Scripts -->
+  <script>
+    // IntersectionObserver to reveal .animate-fade-in elements
+    (function(){
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('in-view');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.12 });
+
+      document.querySelectorAll('.animate-fade-in').forEach(el => observer.observe(el));
+    })();
+
+    // Pause clients marquee on hover / tap
+    (function(){
+      const track = document.querySelector('.clients-track');
+      if(!track) return;
+      track.addEventListener('mouseenter', ()=> track.style.animationPlayState = 'paused');
+      track.addEventListener('mouseleave', ()=> track.style.animationPlayState = 'running');
+      track.addEventListener('touchstart', ()=> track.style.animationPlayState = 'paused');
+      track.addEventListener('touchend', ()=> track.style.animationPlayState = 'running');
+    })();
+
+    window.addEventListener('load', ()=> {
+      const hero = document.querySelector('#hero > .surface');
+      if(hero) hero.classList.add('animate__animated','animate__fadeIn');
+    });
+
+    // Smooth offset scrolling for sidebar links
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', function(e){
+        const targetId = this.getAttribute('href').slice(1);
+        if(!targetId) return;
+        const el = document.getElementById(targetId);
+        if(!el) return;
+        e.preventDefault();
+        const headerHeight = document.querySelector('header').offsetHeight + 16;
+        const rectTop = el.getBoundingClientRect().top + window.scrollY - headerHeight;
+        window.scrollTo({ top: rectTop, behavior: 'smooth' });
+      });
+    });
+  </script>
+</body>
+</html>

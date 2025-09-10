@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Кейс: Информационный бот со слотами - Александр Винокуров</title>
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous"/>
+
+  <!-- Animate.css -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+
+  <style>
+    :root {
+      --fb-blue: #1877f2;
+      --fb-light-bg: #f0f2f5;
+      --fb-surface: #ffffff;
+      --fb-border: #d9dde1;
+      --muted: #000000;
+      --accent-gradient: linear-gradient(90deg, var(--fb-blue) 0%, #6c5ce7 100%);
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--fb-light-bg);
+      color: #050505;
+      font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      scroll-behavior: smooth;
+    }
+
+    .surface {
+      background: var(--fb-surface);
+      border: 1px solid var(--fb-border);
+      border-radius: 12px;
+    }
+
+    .feature-title {
+      color: var(--fb-blue);
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .btn-gradient {
+      background: var(--fb-blue);
+      color: white;
+    }
+
+    .btn-outline {
+      border: 1px solid var(--fb-border);
+      color: var(--fb-blue);
+      background: transparent;
+    }
+
+    .pulse {
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      background: linear-gradient(90deg,var(--fb-blue),#7c3aed);
+      box-shadow: 0 0 12px rgba(124,58,237,0.12);
+      position: relative;
+    }
+    .pulse::after{
+      content:'';
+      position:absolute;
+      left:50%; top:50%;
+      width:100%; height:100%;
+      transform:translate(-50%,-50%);
+      border-radius:999px;
+      animation: pulseAnim 2s infinite;
+      background: radial-gradient(circle, rgba(24,119,242,0.12), transparent 40%);
+      opacity: 0.7;
+      filter: blur(6px);
+    }
+    @keyframes pulseAnim {
+      0% { transform: translate(-50%,-50%) scale(.9); opacity: .6; }
+      60% { transform: translate(-50%,-50%) scale(1.6); opacity: 0; }
+      100% { transform: translate(-50%,-50%) scale(.9); opacity: 0; }
+    }
+
+    .case-card:hover { 
+      transform: translateY(-6px); 
+      box-shadow: 0 8px 30px rgba(2,6,23,0.3); 
+    }
+
+    .animate-fade-in {
+      opacity: 0;
+      transform: translateY(12px);
+      transition: all .7s cubic-bezier(.2,.9,.2,1);
+    }
+    .in-view {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Image container styling - 1300x1400 → 650x700 */
+    .image-slot-bot {
+      width: 100%;
+      max-width: 650px;
+      height: auto;
+      aspect-ratio: 13 / 14; /* 1300 / 1400 = 13/14 */
+      border-radius: 12px;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #666;
+      font-weight: 600;
+      font-size: 1.2rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    /* Back button in header */
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      background: rgba(24, 119, 242, 0.08);
+      color: var(--fb-blue);
+      font-weight: 600;
+      font-size: 0.95rem;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+    .back-btn:hover {
+      background: rgba(24, 119, 242, 0.15);
+      transform: translateY(-1px);
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      main { padding: 16px; }
+      .back-btn { padding: 6px 12px; font-size: 0.9rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Fixed Header with Back Button -->
+  <header class="fixed top-0 left-0 right-0 h-16 flex items-center px-6 bg-white border-b border-gray-200 backdrop-blur-sm z-50">
+    <a href="index.html" class="back-btn">
+      <i class="fa-solid fa-arrow-left"></i> Назад к кейсам
+    </a>
+
+    <div class="ml-auto flex items-center gap-3">
+      <div class="pulse" aria-hidden="true"></div>
+      <div class="text-sm font-mono text-gray-500">#</div>
+    </div>
+  </header>
+
+  <!-- Main content -->
+  <main class="min-h-screen pt-24 pb-24 px-10">
+
+    <!-- Case Header -->
+    <section class="mb-8">
+      <div class="surface p-8 rounded-2xl border border-[rgba(255,255,255,0.02)]">
+        <div class="flex items-center gap-4 mb-6">
+          <div class="w-16 h-16 rounded-full flex items-center justify-center" style="background:linear-gradient(90deg,var(--fb-blue),#6c5ce7);">
+            <i class="fa-solid fa-chart-line text-white text-xl"></i>
+          </div>
+          <div>
+            <div class="text-xs text-gray-800 uppercase tracking-wide">Retention | SMM</div>
+            <h1 class="text-3xl md:text-4xl font-extrabold feature-title">Информационный бот со слотами</h1>
+          </div>
+        </div>
+        <div class="max-w-3xl">
+          <p class="text-gray-800 leading-relaxed">
+            Telegram-бот с аналитикой по слотам, рассчитывающий привлекательность для игроков по уникальной формуле - для ускорения решений маркетинга и SMM.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Problem Section -->
+    <section class="mb-4">
+      <h2 class="text-2xl font-semibold mb-4 feature-title">🔍 Проблема</h2>
+      <div class="surface p-6 rounded-xl">
+        <div class="space-y-4 text-gray-800 text-lg leading-relaxed">
+          <p>
+            Маркетинговая команда тратила очень много времени на ручной анализ слотов, чтобы выбрать, какие из них стоит продвигать в соцсетях. Не было единого источника правды, данные разбросаны по таблицам, базах провайдеров и внутренним отчетам.
+          </p>
+          <p>
+            Это приводило к:
+          </p>
+          <ul class="list-disc pl-6 space-y-2">
+            <li>Субъективным решениям: выбор слотов основывался на интуиции, а не данных.</li>
+            <li>Задержкам: на поиск RTP, волатильности и популярности уходило много времени.</li>
+            <li>Промахам: посты о непопулярных или «скучных» слотах получали низкий охват.</li>
+          </ul>
+          <p>
+            Нужен был инструмент, который бы за секунды давал объективную оценку привлекательности слота для игрока.
+          </p>
+          <p class="mt-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
+            <strong>🎯 Расширение проблематики:</strong> Просто RTP и волатильность - недостаточно. Нужно было учитывать <strong>поведение игроков, сезонность, тематику, регион, провайдера</strong> и десятки других параметров и всё это объединить в одну метрику.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Solution Section -->
+    <section class="mb-8">
+      <h2 class="text-2xl font-semibold mb-4 feature-title">💡 Решение</h2>
+      <div class="surface p-6 rounded-xl">
+        <div class="space-y-6 text-gray-800 text-lg leading-relaxed">
+          <p>
+            Я создал Telegram-бота, который стал внутренним аналитическим инструментом для маркетологов. Его ключевые функции:
+          </p>
+
+          <div class="space-y-4 mt-6">
+            <h3 class="text-xl font-semibold">1. Поиск по названию</h3>
+            <ul class="space-y-3 text-base">
+              <li><strong>Мгновенный ответ:</strong> Достаточно ввести название слота. Бот выдает RTP, волатильность, тематику, провайдера, сезонные тренды и «рейтинг привлекательности».</li>
+              <li><strong>Глубокая аналитика:</strong> Под каждым слотом краткая выжимка.</li>
+            </ul>
+
+            <h3 class="text-xl font-semibold mt-6">2. Топы и фильтры</h3>
+            <ul class="space-y-3 text-base">
+              <li><strong>Топ по привлекательности:</strong> Автоматически обновляемый рейтинг слотов по моей формуле.</li>
+              <li><strong>Фильтры:</strong> Можно выбрать «Топ по RTP», «Топ по волатильности», «Популярные на Slotcatalog», «Сезонные (Новый год, Хэллоуин)» и т.д.</li>
+            </ul>
+
+            <h3 class="text-xl font-semibold mt-6">3. Формула привлекательности</h3>
+            <div class="p-4 bg-gray-50 rounded-lg text-sm">
+              <p class="mb-2"><strong>📊 Формула учитывает более 20 параметров:</strong></p>
+              <ul class="list-disc pl-5 space-y-1">
+                <li>Базовые: RTP, волатильность, частота выигрышей</li>
+                <li>Поведенческие: среднее время сессии, % игроков, делающих повторный депозит после этого слота</li>
+                <li>Контекстные: сезонность, актуальность темы (например, «Египет» или «Космос»)</li>
+                <li>Гео: популярность в конкретных регионах</li>
+                <li>Провайдер: доверие к бренду, частота обновлений</li>
+              </ul>
+              <p class="mt-3 text-xs text-gray-600">Формула постоянно обучается на новых данных, чем больше игроков играют, тем точнее становится прогноз.</p>
+            </div>
+            <!-- Image Below Text -->
+            <div class="mt-12 flex justify-center">
+              <div class="w-full max-w-[650px]">
+                <h4 class="font-medium mb-3 text-center">📊 Интерфейс бота и пример аналитики по слоту</h4>
+                <div class="image-slot-bot">
+                  <!-- Замените на реальное изображение -->
+                  <img src="slot_bot_ui.jpg">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Result Section -->
+    <section class="mb-8">
+      <h2 class="text-2xl font-semibold mb-4 feature-title">📈 Результат и профит</h2>
+      <div class="surface p-6 rounded-xl">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div class="text-center p-5 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100">
+            <div class="text-3xl font-bold text-blue-600 mb-1">90%</div>
+            <div class="text-sm text-gray-700">Экономия времени</div>
+          </div>
+          <div class="text-center p-5 rounded-lg bg-gradient-to-br from-green-50 to-emerald-50 border border-green-100">
+            <div class="text-3xl font-bold text-green-600 mb-1">2 мин</div>
+            <div class="text-sm text-gray-700">На анализ слота</div>
+          </div>
+          <div class="text-center p-5 rounded-lg bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-100">
+            <div class="text-3xl font-bold text-purple-600 mb-1">+20%</div>
+            <div class="text-sm text-gray-700">Вовлеченности</div>
+          </div>
+        </div>
+
+        <div class="space-y-4 text-gray-800 text-lg leading-relaxed">
+          <p>
+            <strong>Количественные результаты:</strong>
+          </p>
+          <ul class="list-disc pl-6 space-y-2">
+            <li>Время на выбор слота для поста сократилось с <strong>До 2 минут</strong>.</li>
+            <li>Команда маркетинга теперь тратит на анализ <strong>на 90% меньше времени</strong>.</li>
+            <li>CTR (кликабельность) постов про слоты выросла на <strong>40%</strong>, потому что продвигаются действительно привлекательные игры.</li>
+          </ul>
+
+          <p class="mt-4">
+            <strong>Качественные результаты:</strong>
+          </p>
+          <ul class="list-disc pl-6 space-y-2">
+            <li>Решения стали объективными - теперь все споры решаются «по цифрам из бота».</li>
+            <li>Появилась возможность тестировать гипотезы: «А что, если постить слоты с высокой волатильностью по пятницам?»</li>
+            <li>Бот стал стандартом для работы саппорта и маркетинга</li>
+          </ul>
+
+          <div class="mt-6 p-5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl">
+            <h3 class="font-bold text-lg mb-2">🚀 Профит для бизнеса</h3>
+            <p>Ускорение и объективизация выбора слотов позволили маркетинговой команде запускать на 30% больше тестовых кампаний, что напрямую увеличило конверсию из соцсетей в игроков.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Back to Cases (bottom) -->
+    <div class="text-center mt-8">
+      <a href="index.html" class="inline-flex items-center gap-2 btn-outline px-6 py-3 rounded-md font-medium hover:bg-gray-50 transition">
+        <i class="fa-solid fa-arrow-left"></i> Назад к кейсам
+      </a>
+    </div>
+
+  </main>
+
+  <!-- Scripts -->
+  <script>
+    // IntersectionObserver to reveal .animate-fade-in elements
+    (function(){
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('in-view');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.12 });
+
+      document.querySelectorAll('.animate-fade-in').forEach(el => observer.observe(el));
+    })();
+
+    // Smooth scrolling for internal links
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', function(e){
+        const targetId = this.getAttribute('href').slice(1);
+        if(!targetId) return;
+        const el = document.getElementById(targetId);
+        if(!el) return;
+        e.preventDefault();
+        const headerHeight = document.querySelector('header').offsetHeight + 16;
+        const rectTop = el.getBoundingClientRect().top + window.scrollY - headerHeight;
+        window.scrollTo({ top: rectTop, behavior: 'smooth' });
+      });
+    });
+  </script>
+</body>
+</html>

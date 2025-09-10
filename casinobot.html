@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Кейс: Удержание игроков через Telegram Casino Bot - Александр Винокуров</title>
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous"/>
+
+  <!-- Animate.css -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+
+  <style>
+    :root {
+      --fb-blue: #1877f2;
+      --fb-light-bg: #f0f2f5;
+      --fb-surface: #ffffff;
+      --fb-border: #d9dde1;
+      --muted: #000000;
+      --accent-gradient: linear-gradient(90deg, var(--fb-blue) 0%, #6c5ce7 100%);
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--fb-light-bg);
+      color: #050505;
+      font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      scroll-behavior: smooth;
+    }
+
+    .surface {
+      background: var(--fb-surface);
+      border: 1px solid var(--fb-border);
+      border-radius: 12px;
+    }
+
+    .feature-title {
+      color: var(--fb-blue);
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .btn-gradient {
+      background: var(--fb-blue);
+      color: white;
+    }
+
+    .btn-outline {
+      border: 1px solid var(--fb-border);
+      color: var(--fb-blue);
+      background: transparent;
+    }
+
+    .pulse {
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      background: linear-gradient(90deg,var(--fb-blue),#7c3aed);
+      box-shadow: 0 0 12px rgba(124,58,237,0.12);
+      position: relative;
+    }
+    .pulse::after{
+      content:'';
+      position:absolute;
+      left:50%; top:50%;
+      width:100%; height:100%;
+      transform:translate(-50%,-50%);
+      border-radius:999px;
+      animation: pulseAnim 2s infinite;
+      background: radial-gradient(circle, rgba(24,119,242,0.12), transparent 40%);
+      opacity: 0.7;
+      filter: blur(6px);
+    }
+    @keyframes pulseAnim {
+      0% { transform: translate(-50%,-50%) scale(.9); opacity: .6; }
+      60% { transform: translate(-50%,-50%) scale(1.6); opacity: 0; }
+      100% { transform: translate(-50%,-50%) scale(.9); opacity: 0; }
+    }
+
+    .case-card:hover { 
+      transform: translateY(-6px); 
+      box-shadow: 0 8px 30px rgba(2,6,23,0.3); 
+    }
+
+    .animate-fade-in {
+      opacity: 0;
+      transform: translateY(12px);
+      transition: all .7s cubic-bezier(.2,.9,.2,1);
+    }
+    .in-view {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Video container styling */
+    .video-wrapper {
+      position: relative;
+      padding-bottom: 56.25%; /* 16:9 */
+      height: 0;
+      overflow: hidden;
+      border-radius: 12px;
+      background: #000;
+    }
+    .video-wrapper iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    /* Back button in header */
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      background: rgba(24, 119, 242, 0.08);
+      color: var(--fb-blue);
+      font-weight: 600;
+      font-size: 0.95rem;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+    .back-btn:hover {
+      background: rgba(24, 119, 242, 0.15);
+      transform: translateY(-1px);
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      main { padding: 16px; }
+      .back-btn { padding: 6px 12px; font-size: 0.9rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Fixed Header with Back Button -->
+  <header class="fixed top-0 left-0 right-0 h-16 flex items-center px-6 bg-white border-b border-gray-200 backdrop-blur-sm z-50">
+    <a href="index.html" class="back-btn">
+      <i class="fa-solid fa-arrow-left"></i> Назад к кейсам
+    </a>
+
+    <div class="ml-auto flex items-center gap-3">
+      <div class="pulse" aria-hidden="true"></div>
+      <div class="text-sm font-mono text-gray-500">#</div>
+    </div>
+  </header>
+
+  <!-- Main content -->
+  <main class="min-h-screen pt-24 pb-24 px-10">
+
+    <!-- Case Header -->
+    <section class="mb-8">
+      <div class="surface p-8 rounded-2xl border border-[rgba(255,255,255,0.02)]">
+        <div class="flex items-center gap-4 mb-6">
+          <div class="w-16 h-16 rounded-full flex items-center justify-center" style="background:linear-gradient(90deg,var(--fb-blue),#6c5ce7);">
+            <i class="fa-solid fa-coins text-white text-xl"></i>
+          </div>
+          <div>
+            <div class="text-xs text-gray-800 uppercase tracking-wide">Retention | Telegram Bot</div>
+            <h1 class="text-3xl md:text-4xl font-extrabold feature-title">Удержание игроков через Telegram Casino Bot</h1>
+          </div>
+        </div>
+        <div class="max-w-3xl">
+          <p class="text-gray-800 leading-relaxed">
+            Разработка и внедрение Telegram-боте казино для повышения активности редепозитов и удержания пользователей.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Problem Section -->
+    <section class="mb-4">
+      <h2 class="text-2xl font-semibold mb-4 feature-title">🔍 Проблема</h2>
+      <div class="surface p-6 rounded-xl">
+        <div class="space-y-4 text-gray-800 text-lg leading-relaxed">
+          <p>
+            Основная проблема казино-проекта - низкий уровень удержания игроков после первого депозита. Пользователи делали один депозит и уходили, не возвращаясь для повторных депозитов.
+          </p>
+          <p>
+            Команда столкнулась с тем, что:
+          </p>
+          <ul class="list-disc pl-6 space-y-2">
+            <li>Игроки не видели причин возвращаться, было мало систем поощрений.</li>
+            <li>Отсутствовала игровая механика, которая бы мотивировала игроков заходить в соцсети (Где поводились промо новых бонусов и слотов) регулярно.</li>
+          </ul>
+          <p class="mt-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
+            <strong>🎯 Расширение проблематики:</strong> Нужно было не просто раздать бонусы, а создать <strong>игровую механику</strong>, которая бы вовлекала игроков, мотивировала их заходить в бота ежедневно и делала процесс получения бонусов увлекательным и предсказуемым.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Solution Section -->
+    <section class="mb-8">
+      <h2 class="text-2xl font-semibold mb-4 feature-title">💡 Решение</h2>
+      <div class="surface p-6 rounded-xl">
+        <div class="space-y-6 text-gray-800 text-lg leading-relaxed">
+          <p>
+            Я разработал и внедрил систему лояльности в Telegram-боте казино, состоящую из двух ключевых компонентов:
+          </p>
+
+          <!-- Text Description Only -->
+          <div class="space-y-4">
+            <h3 class="text-xl font-semibold">1. Мини-казино с системой баллов</h3>
+            <ul class="space-y-3 text-base">
+              <li><strong>Автоматическое начисление баллов:</strong> Подписавшиеся пользователи получали баллы в определенные дни недели и за активность, создавая предсказуемый ритм вовлечения.</li>
+              <li><strong>Обмен баллов на бонусы:</strong> Игроки могли обменивать накопленные баллы на фриспины или депозитные бонусы, что напрямую стимулировало редепозиты.</li>
+              <li><strong>Игровая механика:</strong> Интерфейс бота был оформлен как мини-казино, где можно было делать ставки на баллы, используя механику dice-эмозди в качестве слотов.</li>
+            </ul>
+
+            <h3 class="text-xl font-semibold mt-6">2. Бот-админка для управления</h3>
+            <ul class="space-y-3 text-base">
+              <li><strong>Гибкое управление:</strong> Через второго бота администраторы могли настраивать количество баллов, проверить игровые сессии, баланс игроков, а так же забанить и разбанить их.</li>
+              <li><strong>Ручное вручение бонусов:</strong> Для VIP-игроков или в качестве персонального поощрения администраторы могли вручную начислять баллы через интерфейс бота.</li>
+            </ul>
+
+            <div class="mt-6 p-4 bg-blue-50 border-l-4 border-blue-400 rounded">
+              <strong>🎯 Расширение решения:</strong> Система была спроектирована как полностью автономная: после настройки она работала без вмешательства, а админка позволяла оперативно реагировать на изменения и тестировать новые механики удержания.
+            </div>
+          </div>
+            <!-- Videos Below Text - Perfectly Aligned, 25% Larger -->
+            <style>
+            .video-portrait {
+                position: relative;
+                padding-bottom: 157.2%; /* 720 / 458 ≈ 1.572 → 157.2% */
+                height: 0;
+                overflow: hidden;
+                border-radius: 12px;
+                background: #000;
+            }
+            .video-portrait iframe {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                border: none;
+            }
+            </style>
+
+            <div class="flex flex-col lg:flex-row gap-6 mt-10">
+            <!-- Left Video - Pinned to left half, centered within it -->
+            <div class="w-full lg:w-1/2 flex justify-start lg:justify-center items-center">
+                <div class="w-full max-w-[287.5px]">
+                <h4 class="font-medium mb-3 text-center">🎥 Интерфейс для игроков</h4>
+                <div class="video-portrait">
+                    <iframe src="1.webm" title="Интерфейс для игроков" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </div>
+                </div>
+            </div>
+            <!-- Right Video - Pinned to right half, centered within it -->
+            <div class="w-full lg:w-1/2 flex justify-end lg:justify-center items-center">
+                <div class="w-full max-w-[287.5px]">
+                <h4 class="font-medium mb-3 text-center">🛠️ Интерфейс админки</h4>
+                <div class="video-portrait">
+                    <iframe src="2.webm" title="Интерфейс админки" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </div>
+                </div>
+            </div>
+            </div>
+
+    <!-- Result Section -->
+    <section class="mb-8">
+      <h2 class="text-2xl font-semibold mb-4 feature-title">📈 Результат и профит</h2>
+      <div class="surface p-6 rounded-xl">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div class="text-center p-5 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100">
+            <div class="text-3xl font-bold text-blue-600 mb-1">+35%</div>
+            <div class="text-sm text-gray-700">Активность редепозитов</div>
+          </div>
+          <div class="text-center p-5 rounded-lg bg-gradient-to-br from-green-50 to-emerald-50 border border-green-100">
+            <div class="text-3xl font-bold text-green-600 mb-1">1.5x</div>
+            <div class="text-sm text-gray-700">Удержание игроков</div>
+          </div>
+          <div class="text-center p-5 rounded-lg bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-100">
+            <div class="text-3xl font-bold text-purple-600 mb-1">4.8/5</div>
+            <div class="text-sm text-gray-700">Средний рейтинг бота по опросам в чатах игровок</div>
+          </div>
+        </div>
+
+        <div class="space-y-4 text-gray-800 text-lg leading-relaxed">
+          <p>
+            <strong>Количественные результаты за первый месяц:</strong>
+          </p>
+          <ul class="list-disc pl-6 space-y-2">
+            <li>Активность редепозитов выросла на <strong>35%</strong> по сравнению с предыдущим периодом.</li>
+            <li>Удержание игрокв увеличилось в <strong>1.5 раза</strong>.</li>
+            <li>Средний рейтинг бота среди пользователей - <strong>4.8 из 5</strong>.</li>
+          </ul>
+
+          <p class="mt-4">
+            <strong>Качественные результаты:</strong>
+          </p>
+          <ul class="list-disc pl-6 space-y-2">
+            <li>Игроки начали заходить в бота регулярно, чтобы не пропустить начисление баллов, что создало привычку.</li>
+            <li>Система стала мощным инструментом для персональных акций и удержания VIP-игроков.</li>
+            <li>Административная команда получила простой инструмент для управления ботом без зависимости от разработчика.</li>
+          </ul>
+
+          <div class="mt-6 p-5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl">
+            <h3 class="font-bold text-lg mb-2">🚀 Профит для бизнеса</h3>
+            <p>Рост активности редепозитов на 35% позволил снизить зависимость от постоянного привлечения новых игроков и увеличить общую прибыльность проекта уже в первый месяц после запуска.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Back to Cases (bottom) -->
+    <div class="text-center mt-8">
+      <a href="index.html" class="inline-flex items-center gap-2 btn-outline px-6 py-3 rounded-md font-medium hover:bg-gray-50 transition">
+        <i class="fa-solid fa-arrow-left"></i> Назад к кейсам
+      </a>
+    </div>
+
+  </main>
+
+  <!-- Scripts -->
+  <script>
+    // IntersectionObserver to reveal .animate-fade-in elements
+    (function(){
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('in-view');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.12 });
+
+      document.querySelectorAll('.animate-fade-in').forEach(el => observer.observe(el));
+    })();
+
+    // Smooth scrolling for internal links
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', function(e){
+        const targetId = this.getAttribute('href').slice(1);
+        if(!targetId) return;
+        const el = document.getElementById(targetId);
+        if(!el) return;
+        e.preventDefault();
+        const headerHeight = document.querySelector('header').offsetHeight + 16;
+        const rectTop = el.getBoundingClientRect().top + window.scrollY - headerHeight;
+        window.scrollTo({ top: rectTop, behavior: 'smooth' });
+      });
+    });
+  </script>
+</body>
+</html>

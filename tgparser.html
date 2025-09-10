@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Кейс: Парсер чатов с определителем профессий - Александр Винокуров</title>
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous"/>
+
+  <!-- Animate.css -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+
+  <style>
+    :root {
+      --fb-blue: #1877f2;
+      --fb-light-bg: #f0f2f5;
+      --fb-surface: #ffffff;
+      --fb-border: #d9dde1;
+      --muted: #000000;
+      --accent-gradient: linear-gradient(90deg, var(--fb-blue) 0%, #6c5ce7 100%);
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--fb-light-bg);
+      color: #050505;
+      font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      scroll-behavior: smooth;
+    }
+
+    .surface {
+      background: var(--fb-surface);
+      border: 1px solid var(--fb-border);
+      border-radius: 12px;
+    }
+
+    .feature-title {
+      color: var(--fb-blue);
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .btn-gradient {
+      background: var(--fb-blue);
+      color: white;
+    }
+
+    .btn-outline {
+      border: 1px solid var(--fb-border);
+      color: var(--fb-blue);
+      background: transparent;
+    }
+
+    .pulse {
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      background: linear-gradient(90deg,var(--fb-blue),#7c3aed);
+      box-shadow: 0 0 12px rgba(124,58,237,0.12);
+      position: relative;
+    }
+    .pulse::after{
+      content:'';
+      position:absolute;
+      left:50%; top:50%;
+      width:100%; height:100%;
+      transform:translate(-50%,-50%);
+      border-radius:999px;
+      animation: pulseAnim 2s infinite;
+      background: radial-gradient(circle, rgba(24,119,242,0.12), transparent 40%);
+      opacity: 0.7;
+      filter: blur(6px);
+    }
+    @keyframes pulseAnim {
+      0% { transform: translate(-50%,-50%) scale(.9); opacity: .6; }
+      60% { transform: translate(-50%,-50%) scale(1.6); opacity: 0; }
+      100% { transform: translate(-50%,-50%) scale(.9); opacity: 0; }
+    }
+
+    .case-card:hover { 
+      transform: translateY(-6px); 
+      box-shadow: 0 8px 30px rgba(2,6,23,0.3); 
+    }
+
+    .animate-fade-in {
+      opacity: 0;
+      transform: translateY(12px);
+      transition: all .7s cubic-bezier(.2,.9,.2,1);
+    }
+    .in-view {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Video container styling */
+    .video-wrapper {
+      position: relative;
+      padding-bottom: 56.25%; /* 16:9 */
+      height: 0;
+      overflow: hidden;
+      border-radius: 12px;
+      background: #000;
+    }
+    .video-wrapper iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    /* Image placeholder */
+    .image-placeholder {
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #666;
+      font-weight: 600;
+      font-size: 1.2rem;
+    }
+
+    /* Back button in header */
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      background: rgba(24, 119, 242, 0.08);
+      color: var(--fb-blue);
+      font-weight: 600;
+      font-size: 0.95rem;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+    .back-btn:hover {
+      background: rgba(24, 119, 242, 0.15);
+      transform: translateY(-1px);
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      main { padding: 16px; }
+      .back-btn { padding: 6px 12px; font-size: 0.9rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Fixed Header with Back Button -->
+  <header class="fixed top-0 left-0 right-0 h-16 flex items-center px-6 bg-white border-b border-gray-200 backdrop-blur-sm z-50">
+    <a href="index.html" class="back-btn">
+      <i class="fa-solid fa-arrow-left"></i> Назад к кейсам
+    </a>
+
+    <div class="ml-auto flex items-center gap-3">
+      <div class="pulse" aria-hidden="true"></div>
+      <div class="text-sm font-mono text-gray-500">#</div>
+    </div>
+  </header>
+
+  <!-- Main content -->
+  <main class="min-h-screen pt-24 pb-24 px-10">
+
+    <!-- Case Header -->
+    <section class="mb-8">
+      <div class="surface p-8 rounded-2xl border border-[rgba(255,255,255,0.02)]">
+        <div class="flex items-center gap-4 mb-6">
+          <div class="w-16 h-16 rounded-full flex items-center justify-center" style="background:linear-gradient(90deg,var(--fb-blue),#6c5ce7);">
+            <i class="fa-solid fa-magnifying-glass text-white text-xl"></i>
+          </div>
+          <div>
+            <div class="text-xs text-gray-800 uppercase tracking-wide">Product | Marketing</div>
+            <h1 class="text-3xl md:text-4xl font-extrabold feature-title">Парсер чатов с определителем профессий</h1>
+          </div>
+        </div>
+        <div class="max-w-3xl">
+          <p class="text-gray-800 leading-relaxed">
+            Инструмент для автоматического поиска и фильтрации контактов в Telegram-чатах по профессиям и ключевым словам с экспортом в CSV и удобным веб-интерфейсом.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Problem Section -->
+    <section class="mb-4">
+      <h2 class="text-2xl font-semibold mb-4 feature-title">🔍 Проблема</h2>
+      <div class="surface p-6 rounded-xl">
+        <div class="space-y-4 text-gray-800 text-lg leading-relaxed">
+          <p>
+            В iGaming-индустрии критически важно оперативно находить партнеров: владельцев казино, аффилиатов, специалистов на аутсорс, а ручной поиск в Telegram-чатах - это ад.
+          </p>
+          <p>
+            Команда тратила <strong>до 8 часов в неделю</strong> на:
+          </p>
+          <ul class="list-disc pl-6 space-y-2">
+            <li>Просмотр сотен профилей вручную</li>
+            <li>Анализ биографий на наличие ключевых слов</li>
+            <li>Копирование контактов в таблицы</li>
+            <li>Повторную проверку и фильтрацию</li>
+          </ul>
+          <p>
+            Это не только медленно, но и субъективно - легко пропустить нужного человека или, наоборот, добавить нерелевантный контакт.
+          </p>
+          <p class="mt-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
+            <strong>🎯 Расширение проблематики:</strong> Нужно было не просто найти контакты, а <strong>структурировать</strong> их: определить профессию, уровень компетенции, сферу интересов - и сделать это <strong>масштабируемо</strong> для десятков чатов одновременно.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Solution Section -->
+    <section class="mb-8">
+      <h2 class="text-2xl font-semibold mb-4 feature-title">💡 Решение</h2>
+      <div class="surface p-6 rounded-xl">
+        <div class="space-y-6 text-gray-800 text-lg leading-relaxed">
+          <p>
+            Я разработал комплексное решение на Python, состоящее из двух частей:
+          </p>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-6">
+            <!-- Left: Description -->
+            <div class="space-y-4">
+              <h3 class="text-xl font-semibold">1. Парсер + классификатор</h3>
+              <ul class="space-y-3 text-base">
+                <li><strong>Сбор данных:</strong> Скрипт подключается к Telegram API, собирает пользователей из указанных чатов (публичных или приватных, куда есть доступ).</li>
+                <li><strong>Анализ биографий:</strong> Каждое описание пропускается через NLP-фильтр с собственным словарем профессий (казино, аффилиат, маркетолог, разработчик и т.д.) и ключевых слов («ищу партнеров», «работаю с казино», «партнерка» и т.п.).</li>
+                <li><strong>Оценка релевантности:</strong> На основе совпадений по ключевым словам и паттернам присваивается «уровень уверенности» - чтобы отсеять ложные срабатывания.</li>
+                <li><strong>Экспорт:</strong> Все данные экспортируются в CSV с колонками: username, имя, био, теги, уровень релевантности.</li>
+              </ul>
+
+              <h3 class="text-xl font-semibold mt-6">2. Веб-интерфейс для поиска</h3>
+              <ul class="space-y-3 text-base">
+                <li><strong>Удобный фильтр:</strong> Загруженные контакты можно фильтровать по тегам, ключевым словам, уровню релевантности.</li>
+                <li><strong>Поиск по любому полю:</strong> Быстрый поиск по имени, юзернейму или тексту биографии.</li>
+                <li><strong>Экспорт по выборке:</strong> Можно выгрузить только отфильтрованные результаты, например, только «аффилиаты» с высокой релевантностью.</li>
+              </ul>
+
+              <div class="mt-6 p-4 bg-blue-50 border-l-4 border-blue-400 rounded">
+                <strong>🎯 Расширение решения:</strong> Скрипт легко масштабируется, можно добавлять новые чаты, обновлять словари профессий, настраивать веса ключевых слов. Веб-интерфейс позволяет работать с базой без технических навыков.
+              </div>
+            </div>
+
+            <!-- Right: Media placeholders -->
+            <div class="space-y-6">
+              <!-- Placeholder for Screenshot -->
+              <div>
+                <h4 class="font-medium mb-3">📊 Таблица с тегами и релевантностью</h4>
+                <img src="tgparser.jpg" class="image-placeholder w-full h-64">
+              </img>
+              </div>
+
+              <!-- Placeholder for Video -->
+              <div>
+                <h4 class="font-medium mb-3">🎥 Демонстрация веб-интерфейса</h4>
+                <div class="video-wrapper">
+                  <!-- Замените src на реальное видео -->
+                  <iframe src="tgparser.webm" title="Демо сайта" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Result Section -->
+    <section class="mb-8">
+      <h2 class="text-2xl font-semibold mb-4 feature-title">📈 Результат и профит</h2>
+      <div class="surface p-6 rounded-xl">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div class="text-center p-5 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100">
+            <div class="text-3xl font-bold text-blue-600 mb-1">95%</div>
+            <div class="text-sm text-gray-700">Снижение времени на поиск</div>
+          </div>
+          <div class="text-center p-5 rounded-lg bg-gradient-to-br from-green-50 to-emerald-50 border border-green-100">
+            <div class="text-3xl font-bold text-green-600 mb-1">8ч → 30мин</div>
+            <div class="text-sm text-gray-700">В неделю</div>
+          </div>
+          <div class="text-center p-5 rounded-lg bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-100">
+            <div class="text-3xl font-bold text-purple-600 mb-1">5x</div>
+            <div class="text-sm text-gray-700">Рост качества базы</div>
+          </div>
+        </div>
+
+        <div class="space-y-4 text-gray-800 text-lg leading-relaxed">
+          <p>
+            <strong>Количественные результаты:</strong>
+          </p>
+          <ul class="list-disc pl-6 space-y-2">
+            <li>Время на поиск партнеров сократилось с <strong>8 часов до 30 минут в неделю</strong>.</li>
+            <li>Качество базы контактов выросло в <strong>5 раз</strong> благодаря фильтрации по релевантности.</li>
+            <li>Команда смогла охватить в <strong>10 раз больше чатов</strong>, чем раньше.</li>
+          </ul>
+
+          <p class="mt-4">
+            <strong>Качественные результаты:</strong>
+          </p>
+          <ul class="list-disc pl-6 space-y-2">
+            <li>Ушла рутина, а сотрудники занимаются стратегией, а не копанием в чатах.</li>
+            <li>База стала структурированной, легко найти именно того, кто нужен.</li>
+            <li>Инструмент был передан другим отделам и теперь им пользуются и маркетинг, и партнерский отдел.</li>
+          </ul>
+
+          <div class="mt-6 p-5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl">
+            <h3 class="font-bold text-lg mb-2">🚀 Профит для бизнеса</h3>
+            <p>За первые 3 месяца использования инструмента было заключено <strong>12 новых партнерских соглашений</strong>, которые принесли компании дополнительный доход.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Back to Cases (bottom) -->
+    <div class="text-center mt-8">
+      <a href="index.html" class="inline-flex items-center gap-2 btn-outline px-6 py-3 rounded-md font-medium hover:bg-gray-50 transition">
+        <i class="fa-solid fa-arrow-left"></i> Назад к кейсам
+      </a>
+    </div>
+
+  </main>
+
+  <!-- Scripts -->
+  <script>
+    // IntersectionObserver to reveal .animate-fade-in elements
+    (function(){
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('in-view');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.12 });
+
+      document.querySelectorAll('.animate-fade-in').forEach(el => observer.observe(el));
+    })();
+
+    // Smooth scrolling for internal links
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', function(e){
+        const targetId = this.getAttribute('href').slice(1);
+        if(!targetId) return;
+        const el = document.getElementById(targetId);
+        if(!el) return;
+        e.preventDefault();
+        const headerHeight = document.querySelector('header').offsetHeight + 16;
+        const rectTop = el.getBoundingClientRect().top + window.scrollY - headerHeight;
+        window.scrollTo({ top: rectTop, behavior: 'smooth' });
+      });
+    });
+  </script>
+</body>
+</html>

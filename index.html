@@ -156,24 +156,45 @@
     }
     /* Adjustments on small screens */
     @media (max-width: 768px){
-      .sidebar { min-width: 220px; max-width: 220px; position: fixed; left: 8px; top: 8px; bottom: 8px; border-radius: 12px; z-index:60; }
-      main { margin-left: 240px; }
-      header { left: 240px; right: 0; }
+      .sidebar {
+        min-width: 220px;
+        max-width: 220px;
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        border-radius: 0;
+        z-index: 60;
+        transform: translateX(-100%);
+        transition: transform .3s ease;
+      }
+      .sidebar.open { transform: translateX(0); }
+
+      main { margin-left: 0 !important; }
+      header { left: 0 !important; right: 0; }
       .clients-track { animation-duration: 28s; }
     }
 
     @media (max-width: 480px){
       .sidebar { min-width:200px; max-width:200px; padding:16px; }
-      main { margin-left: 220px; padding: 18px; }
+      main { margin-left: 0 !important; padding: 18px; }
     }
+
+
 
     .transition-smooth { transition: transform .18s ease, box-shadow .18s ease; }
   </style>
 </head>
+
 <body>
 
   <!-- Sidebar (fixed left) -->
   <aside class="sidebar fixed top-0 left-0 bottom-0 p-6 flex flex-col justify-between text-sm">
+    <!-- Кнопка закрытия (видна только на мобилках) -->
+<button id="menuClose" class="md:hidden absolute top-4 right-4 text-gray-700">
+  <i class="fa-solid fa-xmark text-2xl"></i>
+</button>
+
     <div>
       <!-- Profile (широкая фото-баннер) -->
       <div class="mb-4">
@@ -220,22 +241,32 @@
     </div>
   </aside>
 
-  <!-- Header (fixed top) -->
-  <header class="fixed top-0 left-[260px] right-0 h-14 flex items-center px-6 border-b border-[rgba(255,255,255,0.02)] bg-white/90 border-b border-gray-200 backdrop-blur-sm z-50">
-    <div class="flex items-center gap-3">
-      <div class="pulse" aria-hidden="true"></div>
-      <div class="ml-1 text-sm font-mono text-gray-200">#</div>
-    </div>
+    <!-- Header (адаптивный) -->
+    <header class="fixed top-0 left-0 md:left-[260px] right-0 h-14 flex items-center px-6 bg-white/90 border-b border-gray-200 backdrop-blur-sm z-50">
+      <!-- Бургер появляется только на мобилках -->
+      <button id="menuToggle" class="text-gray-800 mr-4 block md:hidden">
+        <i class="fa-solid fa-bars text-xl"></i>
+      </button>
 
-    <nav class="ml-8 hidden md:flex items-center gap-6 text-sm">
-      <a href="#about" class="hover:text-white text-gray-800">О себе</a>
-      <a href="#cases" class="hover:text-white text-gray-800">Кейсы</a>
-      <a href="#resume" class="hover:text-white text-gray-800">Резюме</a>
-    </nav>
-  </header>
+      </button>
+
+      <!-- Левая часть (твой pulse + #) -->
+      <div class="flex items-center gap-3">
+        <div class="pulse" aria-hidden="true"></div>
+        <div class="ml-1 text-sm font-mono text-gray-200">#</div>
+      </div>
+
+      <!-- Навигация (видна только на md и выше) -->
+      <nav class="ml-8 hidden md:flex items-center gap-6 text-sm">
+        <a href="#about" class="hover:text-black text-gray-800">О себе</a>
+        <a href="#cases" class="hover:text-black text-gray-800">Кейсы</a>
+        <a href="#resume" class="hover:text-black text-gray-800">Резюме</a>
+      </nav>
+    </header>
+
 
   <!-- Main content -->
-  <main class="min-h-screen ml-[260px] pt-20 pb-24 px-10">
+  <main class="min-h-screen pt-20 pb-24 px-4 sm:px-6 md:px-10 md:ml-[260px]">
 
     <!-- Hero -->
     <section id="hero" class="relative mb-5">
@@ -250,25 +281,20 @@
 
             <p class="text-gray-800 max-w-xl mt-4">Я оптимизирую операционные процессы в iGaming: от автоматизации рутины до настройки антифрода. Мои решения повышают KPI, уменьшают риски и экономят время команды</p>
 
-            <div class="mt-6 flex gap-3">
-              <a href="#cases" class="inline-flex items-center gap-2 btn-gradient px-4 py-2 rounded-md font-semibold transition transform hover:scale-105">
-                <i class="fa-solid fa-folder-open"></i> Мои кейсы
-              </a>
-              <a href="/CV_Alex_Vinokurov_Ru.pdf"
-                 download="CV_Alex_Vinokurov_Ru.pdf"
-                 class="inline-flex items-center gap-2 btn-outline px-4 py-2 rounded-md font-medium transition"
-                 aria-label="Скачать резюме (PDF)">
-                <i class="fa-solid fa-download" aria-hidden="true"></i>
-                Скачать резюме (PDF)
-              </a>
-            </div>
-          </div>
+            <a href="#cases" class="inline-flex items-center gap-2 btn-gradient px-3 py-1.5 sm:px-4 sm:py-2 rounded-md text-sm sm:text-base font-semibold transition transform hover:scale-105">
+              <i class="fa-solid fa-folder-open"></i> Мои кейсы
+            </a>
+            <a href="CV_Alex_Vinokurov_Ru.pdf" class="inline-flex items-center gap-2 btn-outline px-3 py-1.5 sm:px-4 sm:py-2 rounded-md text-sm sm:text-base font-medium transition">
+              <i class="fa-solid fa-download"></i> Скачать резюме (PDF)
+            </a>
 
-          <div class="flex justify-center">
+          </div>
+          <div class="flex justify-center hidden md:flex">
             <div class="flex items-center justify-center w-64 h-64">
               <img src="icon.png" alt="Александр Винокуров" class="w-full h-auto rounded-lg" />
             </div>
           </div>
+
         </div>
       </div>
     </section>
@@ -303,7 +329,11 @@
             <div><strong>Задача:</strong> Нужно было быстро находить и контактировать с владельцами казино, аффилиейтами и работниками на аутсорс в Telegram, но вручную это занимало часы</div>
             <div><strong>Решение:</strong> Разработал скрипт, который парсит контакты из чатов, проверяет описания по собранному словарю профессий и фильтрует по ключевым словам и экспортирует в CSV</div>
             <div><strong>Результат:</strong> Сократил время поиска партнеров с 8 часов до 30 минут в неделю</div>
-            <a href="tgparser.html" class="mt-3 inline-block text-sm text-[--fb-blue] hover:underline">Подробнее →</a>
+            <a href="tgparser.html" 
+              class="mt-3 inline-block text-sm text-[--fb-blue] hover:underline 
+                      px-5 py-2 -m-2">
+              Подробнее →
+            </a>
           </div>
         </article>
 
@@ -340,7 +370,11 @@
             <div><strong>Задача:</strong> Нужно было повысить удержание игроков</div>
             <div><strong>Решение:</strong> Запустил в Telegram мини-казино с системой баллов, подписавшиеся пользователи получали в определенные дни баллы, за которые игроки получали бонусы. Управление - через второго бота-админку</div>
             <div><strong>Результат:</strong> Увеличил активность редепозитов на 35% за месяц</div>
-            <a href="casinobot.html" class="mt-3 inline-block text-sm text-[--fb-blue] hover:underline">Подробнее →</a>
+            <a href="casinobot.html"              
+            class="mt-3 inline-block text-sm text-[--fb-blue] hover:underline 
+                      px-5 py-2 -m-2">
+              Подробнее →
+            </a>
           </div>
         </article>
 
@@ -377,7 +411,11 @@
             <div><strong>Задача:</strong> Требовалось быстро создать иконки для слотов под разные категории и провайдеров</div>
             <div><strong>Решение:</strong> Разработал утилиту, позволившую команде в разы быстрее собирать иконки без Figma/Photoshop конвеерным способом</div>
             <div><strong>Результат:</strong> Команда создала более 1к иконок за 3 дня</div>
-            <a href="generator.html" class="mt-3 inline-block text-sm text-[--fb-blue] hover:underline">Подробнее →</a>
+            <a href="generator.html"
+                          class="mt-3 inline-block text-sm text-[--fb-blue] hover:underline 
+                      px-5 py-2 -m-2">
+              Подробнее →
+            </a>
           </div>
         </article>
 
@@ -432,7 +470,11 @@
             <div><strong>Ситуация:</strong> Маркетинг не знал, какие слоты наиболее привлекательны для игры и постов в соцсети</div>
             <div><strong>Решение:</strong> Создал Telegram-бота с аналитикой по волатильности, RTP и с собственной формулой привлекательности для игрока</div>
             <div><strong>Результат:</strong> Ускорил принятие решений, упростил работу маркетинга</div>
-            <a href="slot.html" class="mt-3 inline-block text-sm text-[--fb-blue] hover:underline">Подробнее →</a>
+            <a href="slot.html" 
+                          class="mt-3 inline-block text-sm text-[--fb-blue] hover:underline 
+                      px-5 py-2 -m-2">
+              Подробнее →
+            </a>
           </div>
         </article>
 
@@ -515,11 +557,10 @@
                   <ul class="list-disc ml-5 mt-1 text-gray-800">
                     <li>Руководил командой операторов (обучение, контроль эффективности)</li>
                     <li>Внедрял отчётность по KPI, обеспечивал коммуникацию с техкомандами</li>
-                    <li>Оптимизировал рабочие процессы, повышая скорость обработки инцидентов</li>
                     <li>Разрабатывал инструкции и регламенты для снижения ошибок в работе</li>
                   </ul>
                 </li>
-                
+
                 <li>
                   <strong>Poker Bot Operator</strong><br>
                   Optimal Play Tech, Moscow · Aug 2020 – Dec 2020
@@ -538,55 +579,61 @@
           <!-- Правая колонка: Навыки → Образование → Кнопка -->
           <div>
             <!-- Навыки - вертикально, 4 карточки друг под другом, суженные и прижатые к правому краю -->
-            <div class="space-y-4">
-              <div class="mr-auto" style="width: calc(50% - 1rem)">
-                <div class="surface p-4 rounded-lg border border-gray-200">
-                  <h5 class="font-semibold mb-2">📊 Продукт и операции</h5>
-                  <ul class="text-sm text-gray-800 space-y-1">
-                    <li>Операционное управление</li>
-                    <li>Работа с игровым контентом</li>
-                    <li>Бонусные механики</li>
-                    <li>Организация промо и турниров</li>
-                    <li>Взаимодействие с провайдерами и PSP</li>
-                  </ul>
-                </div>
-              </div>
-
-              <div class="mr-auto" style="width: calc(50% - 1rem)">
-                <div class="surface p-4 rounded-lg border border-gray-200">
-                  <h5 class="font-semibold mb-2">📈 Аналитика и данные</h5>
-                  <ul class="text-sm text-gray-800 space-y-1">
-                    <li>GA4 & Product Analytics</li>
-                    <li>BI Dashboards</li>
-                    <li>Когортный анализ</li>
-                    <li>A/B тестирование</li>
-                  </ul>
-                </div>
-              </div>
-
-              <div class="mr-auto" style="width: calc(50% - 1rem)">
-                <div class="surface p-4 rounded-lg border border-gray-200">
-                  <h5 class="font-semibold mb-2">🛠 Технические навыки</h5>
-                  <ul class="text-sm text-gray-800 space-y-1">
-                    <li>API интеграции</li>
-                    <li>QA & релизы</li>
-                    <li>Python (аналитика и автоматизация)</li>
-                  </ul>
-                </div>
-              </div>
-
-              <div class="mc-auto" style="width: calc(50% - 1rem)">
-                <div class="surface p-4 rounded-lg border border-gray-200">
-                  <h5 class="font-semibold mb-2">🛡 Антифрод и риски</h5>
-                  <ul class="text-sm text-gray-800 space-y-1">
-                    <li>AML / KYC</li>
-                    <li>Мультиаккаунтинг</li>
-                    <li>Бонусный абьюз</li>
-                    <li>Фрод-убытки и риск-менеджмент</li>
-                  </ul>
-                </div>
+          <div class="flex flex-col gap-4">
+            <!-- Продукт и операции -->
+            <div>
+              <div class="surface p-4 rounded-lg border border-gray-200">
+                <h5 class="font-semibold mb-2">📊 Продукт и операции</h5>
+                <ul class="text-sm text-gray-800 space-y-1">
+                  <li>Операционное управление</li>
+                  <li>Работа с игровым контентом</li>
+                  <li>Бонусные механики</li>
+                  <li>Организация промо и турниров</li>
+                  <li>Взаимодействие с провайдерами и PSP</li>
+                </ul>
               </div>
             </div>
+
+            <!-- Аналитика и данные -->
+            <div>
+              <div class="surface p-4 rounded-lg border border-gray-200">
+                <h5 class="font-semibold mb-2">📈 Аналитика и данные</h5>
+                <ul class="text-sm text-gray-800 space-y-1">
+                  <li>GA4 & Product Analytics</li>
+                  <li>BI Dashboards</li>
+                  <li>Когортный анализ</li>
+                  <li>A/B тестирование</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- Технические навыки -->
+            <div>
+              <div class="surface p-4 rounded-lg border border-gray-200">
+                <h5 class="font-semibold mb-2">🛠 Технические навыки</h5>
+                <ul class="text-sm text-gray-800 space-y-1">
+                  <li>API интеграции</li>
+                  <li>QA & релизы</li>
+                  <li>Python (аналитика и автоматизация)</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- Антифрод и риски -->
+            <div>
+              <div class="surface p-4 rounded-lg border border-gray-200">
+                <h5 class="font-semibold mb-2">🛡 Антифрод и риски</h5>
+                <ul class="text-sm text-gray-800 space-y-1">
+                  <li>AML / KYC</li>
+                  <li>Мультиаккаунтинг</li>
+                  <li>Бонусный абьюз</li>
+                  <li>Фрод-убытки и риск-менеджмент</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+
 
             <!-- Образование -->
             <div class="mt-6">
@@ -595,14 +642,13 @@
             </div>
 
             <!-- Кнопка -->
-          <div class="mt-6">
-            <a href="./CV_Alex_Vinokurov_Ru.pdf" 
-               download="CV_Alex_Vinokurov_Ru.pdf" 
-               class="btn-outline px-4 py-2 rounded-md text-sm">
-              Скачать резюме (PDF)
-            </a>
-          </div>
-
+            <div class="mt-6">
+              <a href="CV_Alex_Vinokurov_Ru.pdf" 
+                download 
+                class="btn-outline px-4 py-2 rounded-md text-sm">
+                Скачать резюме (PDF)
+              </a>
+            </div>
 
           </div>
         </div>
@@ -612,6 +658,10 @@
     <footer class="mt-10 text-sm text-gray-500">
       <div class="flex items-center justify-between">
         <div>© 2025 Alexander Vinokurov - Операционный менеджмент и антифрод</div>
+        <div class="space-x-4">
+          <a href="#" class="hover:text-white">Политика конфиденциальности</a>
+          <a href="#" class="hover:text-white">Условия #</a>
+        </div>
       </div>
     </footer>
 
@@ -662,10 +712,43 @@
       });
     });
   </script>
+  <script>
+  document.getElementById('menuToggle').addEventListener('click', () => {
+    document.querySelector('.sidebar').classList.toggle('open');
+  });
+</script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const toggle = document.getElementById('menuToggle');
+    const closeBtn = document.getElementById('menuClose');
+    const sidebar = document.querySelector('.sidebar');
+
+    // открыть
+    if (toggle) {
+      toggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        sidebar.classList.add('open');
+      });
+    }
+
+    // закрыть по кнопке
+    if (closeBtn) {
+      closeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        sidebar.classList.remove('open');
+      });
+    }
+
+    // закрыть при клике вне сайдбара
+    document.addEventListener('click', (e) => {
+      if (sidebar.classList.contains('open') &&
+          !sidebar.contains(e.target) &&
+          !toggle.contains(e.target)) {
+        sidebar.classList.remove('open');
+      }
+    });
+  });
+</script>
+
 </body>
 </html>
-
-
-
-
-

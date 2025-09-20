@@ -321,6 +321,7 @@
 <script>
   // Функция определения платформы по URL
   function detectPlatform(url) {
+    url = url.trim(); // Убираем пробелы по краям
     if (url.includes('t.me')) return 'telegram';
     if (url.includes('vk.com')) return 'vk';
     if (url.includes('facebook.com')) return 'facebook';
@@ -352,81 +353,110 @@
   let currentCategory = 'all';
   let allJobs = []; // Будет заполнен после загрузки
 
-  // Загрузка данных из TSV с автоопределением кодировки
+  // УСИЛЕННАЯ ЗАГРУЗКА С АВТО-ОПРЕДЕЛЕНИЕМ КОДИРОВКИ
   async function loadJobs() {
     try {
       const response = await fetch('jobs.tsv');
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-  
-      // Читаем как бинарные данные
+
+      // Читаем как сырые байты
       const buffer = await response.arrayBuffer();
       const uint8Array = new Uint8Array(buffer);
-  
-      let decoder;
-      let offset = 0;
-  
-      // Проверяем BOM для определения кодировки
+
+      let text = "";
+      let detectedEncoding = "utf-8";
+
+      // 1. Проверяем BOM (Byte Order Mark)
       if (uint8Array.length >= 2) {
-        const bom = uint8Array[0] << 8 | uint8Array[1];
+        const bom = (uint8Array[0] << 8) | uint8Array[1];
+
         if (bom === 0xFEFF) {
-          // UTF-16BE BOM
-          decoder = new TextDecoder('utf-16be');
-          offset = 2;
+          // UTF-16BE
+          const decoder = new TextDecoder('utf-16be');
+          text = decoder.decode(uint8Array.slice(2));
+          detectedEncoding = "utf-16be";
         } else if (bom === 0xFFFE) {
-          // UTF-16LE BOM
-          decoder = new TextDecoder('utf-16le');
-          offset = 2;
+          // UTF-16LE
+          const decoder = new TextDecoder('utf-16le');
+          text = decoder.decode(uint8Array.slice(2));
+          detectedEncoding = "utf-16le";
         } else if (uint8Array.length >= 3 && 
                    uint8Array[0] === 0xEF && 
                    uint8Array[1] === 0xBB && 
                    uint8Array[2] === 0xBF) {
           // UTF-8 BOM
-          decoder = new TextDecoder('utf-8');
-          offset = 3;
+          const decoder = new TextDecoder('utf-8');
+          text = decoder.decode(uint8Array.slice(3));
+          detectedEncoding = "utf-8";
         } else {
-          // Нет BOM — пробуем UTF-8 по умолчанию
-          decoder = new TextDecoder('utf-8');
+          // Нет BOM — пробуем разные варианты
+          try {
+            // Пробуем UTF-16LE — если видим \0 между символами
+            const decoder16 = new TextDecoder('utf-16le');
+            const test16 = decoder16.decode(uint8Array);
+            if (test16.length > 1 && test16[1] === '\0' && test16[0] !== '\0') {
+              text = test16;
+              detectedEncoding = "utf-16le";
+            } else {
+              // Пробуем UTF-8
+              const decoder8 = new TextDecoder('utf-8', { fatal: false }); // Не падать на ошибках!
+              text = decoder8.decode(uint8Array);
+              detectedEncoding = "utf-8";
+            }
+          } catch (e) {
+            // Fallback: UTF-8 с заменой невалидных символов
+            const decoder8 = new TextDecoder('utf-8', { fatal: false });
+            text = decoder8.decode(uint8Array);
+            detectedEncoding = "utf-8 (with replacement)";
+          }
         }
       } else {
-        decoder = new TextDecoder('utf-8');
-      }
-  
-      // Декодируем текст
-      let text = decoder.decode(uint8Array.slice(offset));
-  
-      // Если текст всё ещё битый (символы с пробелами), пробуем UTF-16LE без BOM
-      if (text.length > 1 && text[1] === '\0' && text[0] !== '\0') {
-        console.warn('Обнаружена UTF-16LE без BOM — перекодируем...');
-        decoder = new TextDecoder('utf-16le');
+        // Маленький файл — просто UTF-8
+        const decoder = new TextDecoder('utf-8', { fatal: false });
         text = decoder.decode(uint8Array);
+        detectedEncoding = "utf-8 (small file)";
       }
-  
-      // Убираем возможный BOM в начале строки (если остался)
+
+      console.log('✅ Обнаружена кодировка:', detectedEncoding);
+
+      // Убираем BOM, если остался в начале строки
       if (text.charCodeAt(0) === 0xFEFF) {
         text = text.slice(1);
       }
-  
-      // Парсим TSV как раньше
+
+      // Убираем все нулевые байты и мусорные символы
+      text = text.replace(/\0/g, '').replace(/[^\x20-\x7E\u00A0-\uFFFF]/g, '');
+
+      // Парсим TSV
       const lines = text.trim().split('\n');
+      if (lines.length < 1) {
+        throw new Error('Файл пуст или содержит только заголовок');
+      }
+
       const headers = lines[0].split('\t');
       allJobs = lines.slice(1).map((line, index) => {
         // Разделяем строку по табам и сразу триммируем все части
         const parts = line.split('\t').map(part => part.trim());
-  
+
+        // Игнорируем пустые строки
+        if (parts.length === 1 && parts[0] === '') {
+          return null;
+        }
+
         // Проверяем, что есть хотя бы категория и URL
         if (parts.length < 2) {
-          console.error(`❌ Ошибка в строке ${index + 2}: "${line}" — меньше 2 колонок`);
+          console.warn(`⚠️ Пропущена строка ${index + 2}: "${line}" — меньше 2 колонок`);
           return null;
         }
-  
+
         const [category, url, description] = parts;
-  
+
         // Проверяем, что категория и URL не пустые
         if (!category || !url) {
-          console.error(`❌ Ошибка в строке ${index + 2}: "${line}" — пустая категория или URL`);
+          console.warn(`⚠️ Пропущена строка ${index + 2}: "${line}" — пустая категория или URL`);
           return null;
         }
-  
+
         // Возвращаем объект с данными
         return {
           category: category,
@@ -435,16 +465,16 @@
           platform: detectPlatform(url)
         };
       }).filter(job => job !== null);
-  
-      console.log('Загружено каналов:', allJobs.length);
+
+      console.log('✅ Загружено каналов:', allJobs.length);
       renderJobs(); // Рендерим сразу после загрузки
     } catch (error) {
-      console.error('Ошибка загрузки jobs.tsv:', error);
+      console.error('❌ Ошибка загрузки jobs.tsv:', error);
       document.getElementById('jobs-container').innerHTML = `
         <div class="surface p-8 text-center">
           <i class="fas fa-exclamation-triangle text-4xl text-red-400 mb-4"></i>
           <h3 class="text-xl font-semibold text-gray-700 mb-2">Ошибка загрузки данных</h3>
-          <p class="text-gray-500">Не удалось загрузить список каналов. Проверьте наличие файла <code>jobs.tsv</code>.</p>
+          <p class="text-gray-500">Не удалось загрузить список каналов. Проверьте файл <code>jobs.tsv</code>.</p>
           <p class="text-sm text-red-500 mt-2">${error.message}</p>
         </div>
       `;
@@ -478,6 +508,23 @@
     }
 
     const jobsHTML = filteredJobs.map(job => {
+      // Защита: если URL не начинается с http — показываем ошибку
+      if (!job.url.startsWith('http')) {
+        console.warn('⚠️ Некорректный URL:', job.url);
+        return `
+          <div class="job-card bg-red-50 border-red-200">
+            <div class="flex items-start justify-between mb-3">
+              <div>
+                <span class="category-badge">${job.category}</span>
+                <span class="platform-badge platform-website"><i class="fas fa-exclamation-triangle mr-1"></i>Ошибка URL</span>
+              </div>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">${job.description}</h3>
+            <p class="text-sm text-red-600">Некорректная ссылка: ${job.url}</p>
+          </div>
+        `;
+      }
+
       const platformBadge = getPlatformBadge(job.platform);
       
       return `
@@ -492,7 +539,7 @@
           <h3 class="text-lg font-semibold text-gray-900 mb-2">${job.description}</h3>
           
           <div class="flex items-center justify-between">
-            <a href="${job.url}" target="_blank" class="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium">
+            <a href="${job.url}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium">
               <i class="fas fa-external-link-alt mr-2"></i>
               Перейти к каналу
             </a>
@@ -536,5 +583,6 @@
 </body>
 
 </html>
+
 
 

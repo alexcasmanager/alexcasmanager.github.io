@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Каналы для поиска работы</title>
+  
+  <!-- Я не дизайнер и не верстальщик, лучше в код не смотреть 😢 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous"/>
+
+  <style>
+    :root {
+      --fb-blue: #1877f2;
+      --fb-light-bg: #f0f2f5;   /* общий фон */
+      --fb-surface: #ffffff;    /* фон карточек/секций */
+      --fb-border: #d9dde1;     /* рамки блоков */
+      --muted: #000000;         /* вторичный текст */
+      --accent-gradient: linear-gradient(90deg, var(--fb-blue) 0%, #6c5ce7 100%);
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--fb-light-bg);
+      color: #050505;
+      font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      scroll-behavior: smooth;
+    }
+
+    /* Cards / surfaces */
+    .surface {
+      background: var(--fb-surface);
+      border: 1px solid var(--fb-border);
+      border-radius: 12px;
+    }
+
+    /* Feature title */
+    .feature-title {
+      color: var(--fb-blue);
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    /* Gradient buttons */
+    .btn-gradient {
+      background: var(--fb-blue);
+      color: white;
+    }
+
+    .btn-outline {
+      border: 1px solid var(--fb-border);
+      color: var(--fb-blue);
+      background: transparent;
+    }
+
+    /* Filter buttons */
+    .filter-btn {
+      padding: 8px 16px;
+      border: 1px solid var(--fb-border);
+      border-radius: 8px;
+      background: var(--fb-surface);
+      color: #050505;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .filter-btn.active {
+      background: var(--fb-blue);
+      color: white;
+      border-color: var(--fb-blue);
+    }
+
+    .filter-btn:hover {
+      background: var(--fb-blue);
+      color: white;
+      border-color: var(--fb-blue);
+    }
+
+    /* Job card */
+    .job-card {
+      background: var(--fb-surface);
+      border: 1px solid var(--fb-border);
+      border-radius: 12px;
+      padding: 20px;
+      transition: all 0.3s ease;
+      margin-bottom: 16px;
+    }
+
+    .job-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(24, 119, 242, 0.15);
+      border-color: var(--fb-blue);
+    }
+
+    /* Platform badges */
+    .platform-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-right: 8px;
+      margin-bottom: 8px;
+    }
+
+    .platform-telegram {
+      background: #0088cc;
+      color: white;
+    }
+
+    .platform-vk {
+      background: #4680C2;
+      color: white;
+    }
+
+    .platform-facebook {
+      background: #1877f2;
+      color: white;
+    }
+
+    .platform-linkedin {
+      background: #0077b5;
+      color: white;
+    }
+
+    .platform-website {
+      background: #28a745;
+      color: white;
+    }
+
+    /* Category badge */
+    .category-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      background: var(--fb-light-bg);
+      border: 1px solid var(--fb-border);
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #666;
+      margin-bottom: 8px;
+    }
+
+    /* Stats */
+    .stats-counter {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 20px;
+    }
+
+    /* Job announcement from original code */
+    .job-announcement {
+      background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+      border: 2px solid var(--fb-blue);
+      border-radius: 16px;
+      padding: 12px;
+      text-align: center;
+      margin: 5px auto;
+      max-width: 800px;
+      box-shadow: 0 6px 20px rgba(24, 119, 242, 0.1);
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 32px;
+    }
+
+    .resume-btn {
+      display: inline-block;
+      padding: 14px 36px;
+      background: var(--accent-gradient);
+      color: white;
+      border-radius: 10px;
+      font-weight: 600;
+      text-decoration: none;
+      font-size: 16px;
+      transition: all 0.25s ease;
+      box-shadow: 0 4px 12px rgba(24, 119, 242, 0.2);
+    }
+
+    @media (max-width: 768px) {
+      .filter-section {
+        flex-direction: column;
+        gap: 16px;
+      }
+      
+      .filter-group {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+<!-- Header -->
+<header class="bg-white border-b border-gray-200 sticky top-0 z-50">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-4">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <h1 class="text-xl sm:text-2xl font-bold text-gray-900">Каналы для поиска работы</h1>
+        <p class="text-gray-600 mt-1 text-sm sm:text-base">
+          Список из 700+ каналов. Собран не мной, автор в оригинальном файле.
+        </p>
+      </div>
+      <a href="/Telegram_каналы_Поиск_работы_и_сотрудников_.pdf"
+         download="Telegram_каналы_Поиск_работы_и_сотрудников_.pdf"
+         class="inline-flex items-center gap-2 btn-outline px-3 py-1.5 sm:px-4 sm:py-2 rounded-md text-sm sm:text-base font-medium transition self-start sm:self-auto">
+        <i class="fa-solid fa-download" aria-hidden="true"></i>
+        Скачать список (PDF)
+      </a>
+    </div>
+  </div>
+</header>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto px-6 py-8">
+      <!-- Job Announcement -->
+      <div class="job-announcement">
+        <div style="position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--accent-gradient);"></div>
+        <h3 style="font-size: 24px; font-weight: 700; color: #050505; margin-bottom: 12px; letter-spacing: -0.5px;">
+          Операционный менеджер и антифрод-аналитик в поиске работы
+        </h3>
+        <p style="font-size: 17px; color: #444; line-height: 1.5; margin-bottom: 24px;">
+          Фуллстак работа с играми и бонусной системой, аналитика конверсий, тестирование, взаимодействия с провайдерами и ПС по скидкам и RTP, снижение фрода, оптимизация рутинных операций, внедрение ИИ-инструментов.
+          <br>Ищу проект, где смогу принести реальную пользу и научиться новому.
+        </p>
+        <a href="index.html" class="resume-btn">👉 Резюме и портфолио</a>
+      </div>
+
+      <!-- Filters -->
+      <div class="surface p-6 mb-8">
+        <div class="filter-section flex flex-wrap gap-6">
+          <!-- Platform Filter -->
+          <div class="filter-group flex-1 min-w-64">
+            <h3 class="feature-title text-lg mb-4">Платформа</h3>
+            <div class="flex flex-wrap gap-2">
+              <button class="filter-btn platform-filter active" data-platform="all">
+                <i class="fas fa-globe mr-2"></i>Все
+              </button>
+              <button class="filter-btn platform-filter" data-platform="telegram">
+                <i class="fab fa-telegram-plane mr-2"></i>Telegram
+              </button>
+              <button class="filter-btn platform-filter" data-platform="vk">
+                <i class="fab fa-vk mr-2"></i>ВКонтакте
+              </button>
+              <button class="filter-btn platform-filter" data-platform="linkedin">
+                <i class="fab fa-linkedin mr-2"></i>LinkedIn
+              </button>
+              <button class="filter-btn platform-filter" data-platform="facebook">
+                <i class="fab fa-facebook mr-2"></i>Facebook
+              </button>
+              <button class="filter-btn platform-filter" data-platform="website">
+                <i class="fas fa-link mr-2"></i>Сайты
+              </button>
+            </div>
+          </div>
+
+          <!-- Category Filter -->
+          <div class="filter-group flex-1 min-w-64">
+            <h3 class="feature-title text-lg mb-4">Категория</h3>
+            <div class="flex flex-wrap gap-2">
+              <button class="filter-btn category-filter active" data-category="all">
+                <i class="fas fa-list mr-2"></i>Все
+              </button>
+              <button class="filter-btn category-filter" data-category="General">
+                <i class="fas fa-briefcase mr-2"></i>Общие
+              </button>
+              <button class="filter-btn category-filter" data-category="IT">
+                <i class="fas fa-code mr-2"></i>IT
+              </button>
+              <button class="filter-btn category-filter" data-category="Remote">
+                <i class="fas fa-home mr-2"></i>Удаленка
+              </button>
+              <button class="filter-btn category-filter" data-category="Marketing">
+                <i class="fas fa-bullhorn mr-2"></i>Маркетинг
+              </button>
+              <button class="filter-btn category-filter" data-category="Design">
+                <i class="fas fa-paint-brush mr-2"></i>Дизайн
+              </button>
+              <button class="filter-btn category-filter" data-category="Sales">
+                <i class="fas fa-chart-line mr-2"></i>Продажи
+              </button>
+              <button class="filter-btn category-filter" data-category="Finance">
+                <i class="fas fa-coins mr-2"></i>Финансы
+              </button>
+              <button class="filter-btn category-filter" data-category="HR">
+                <i class="fas fa-users mr-2"></i>HR
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-counter mt-6 pt-4 border-t border-gray-200">
+          Показано: <span id="visible-count">0</span> из <span id="total-count">0</span> каналов
+        </div>
+      </div>
+
+      <!-- Job Cards Container -->
+      <div id="jobs-container">
+        <!-- Jobs will be populated by JavaScript -->
+      </div>
+
+      <!-- No Results Message -->
+      <div id="no-results" class="surface p-8 text-center hidden">
+        <i class="fas fa-search text-4xl text-gray-400 mb-4"></i>
+        <h3 class="text-xl font-semibold text-gray-700 mb-2">Ничего не найдено</h3>
+        <p class="text-gray-500">Попробуйте изменить фильтры для поиска подходящих каналов</p>
+      </div>
+    </main>
+  </div>
+
+<script>
+  // Функция определения платформы по URL
+  function detectPlatform(url) {
+    if (url.includes('t.me')) return 'telegram';
+    if (url.includes('vk.com')) return 'vk';
+    if (url.includes('facebook.com')) return 'facebook';
+    if (url.includes('linkedin.com')) return 'linkedin';
+    return 'website';
+  }
+
+  // Функция получения бейджа платформы
+  function getPlatformBadge(platform) {
+    const badges = {
+      telegram: '<span class="platform-badge platform-telegram"><i class="fab fa-telegram-plane mr-1"></i>Telegram</span>',
+      vk: '<span class="platform-badge platform-vk"><i class="fab fa-vk mr-1"></i>ВКонтакте</span>',
+      facebook: '<span class="platform-badge platform-facebook"><i class="fab fa-facebook mr-1"></i>Facebook</span>',
+      linkedin: '<span class="platform-badge platform-linkedin"><i class="fab fa-linkedin mr-1"></i>LinkedIn</span>',
+      website: '<span class="platform-badge platform-website"><i class="fas fa-link mr-1"></i>Сайт</span>'
+    };
+    return badges[platform] || badges.website;
+  }
+
+  // Функция копирования ссылки
+  function copyLink(url) {
+    navigator.clipboard.writeText(url).then(() => {
+      alert('Ссылка скопирована!');
+    });
+  }
+
+  // Глобальные переменные фильтров
+  let currentPlatform = 'all';
+  let currentCategory = 'all';
+  let allJobs = []; // Будет заполнен после загрузки
+
+  // Загрузка данных из TSV
+  async function loadJobs() {
+    try {
+      const response = await fetch('jobs.tsv');
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      
+      const text = await response.text();
+      const lines = text.trim().split('\n');
+      
+      // Пропускаем заголовок
+      const headers = lines[0].split('\t');
+      allJobs = lines.slice(1).map(line => {
+        const [category, url, description] = line.split('\t');
+        return {
+          category: category.trim(),
+          url: url.trim(),
+          description: description.trim(),
+          platform: detectPlatform(url.trim()) // Автоматически определяем платформу
+        };
+      });
+
+      console.log('Загружено каналов:', allJobs.length);
+      renderJobs(); // Рендерим сразу после загрузки
+    } catch (error) {
+      console.error('Ошибка загрузки jobs.tsv:', error);
+      document.getElementById('jobs-container').innerHTML = `
+        <div class="surface p-8 text-center">
+          <i class="fas fa-exclamation-triangle text-4xl text-red-400 mb-4"></i>
+          <h3 class="text-xl font-semibold text-gray-700 mb-2">Ошибка загрузки данных</h3>
+          <p class="text-gray-500">Не удалось загрузить список каналов. Проверьте наличие файла <code>jobs.tsv</code>.</p>
+          <p class="text-sm text-red-500 mt-2">${error.message}</p>
+        </div>
+      `;
+    }
+  }
+
+  // Рендер карточек
+  function renderJobs() {
+    const container = document.getElementById('jobs-container');
+    const noResults = document.getElementById('no-results');
+    
+    let filteredJobs = allJobs;
+    
+    if (currentPlatform !== 'all') {
+      filteredJobs = filteredJobs.filter(job => job.platform === currentPlatform);
+    }
+    
+    if (currentCategory !== 'all') {
+      filteredJobs = filteredJobs.filter(job => job.category === currentCategory);
+    }
+
+    document.getElementById('visible-count').textContent = filteredJobs.length;
+    document.getElementById('total-count').textContent = allJobs.length;
+
+    if (filteredJobs.length === 0) {
+      container.innerHTML = '';
+      noResults.classList.remove('hidden');
+      return;
+    } else {
+      noResults.classList.add('hidden');
+    }
+
+    const jobsHTML = filteredJobs.map(job => {
+      const platformBadge = getPlatformBadge(job.platform);
+      
+      return `
+        <div class="job-card" data-platform="${job.platform}" data-category="${job.category}">
+          <div class="flex items-start justify-between mb-3">
+            <div>
+              <span class="category-badge">${job.category}</span>
+              ${platformBadge}
+            </div>
+          </div>
+          
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">${job.description}</h3>
+          
+          <div class="flex items-center justify-between">
+            <a href="${job.url}" target="_blank" class="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium">
+              <i class="fas fa-external-link-alt mr-2"></i>
+              Перейти к каналу
+            </a>
+            <button onclick="copyLink('${job.url}')" class="text-gray-500 hover:text-gray-700" title="Скопировать ссылку">
+              <i class="fas fa-copy"></i>
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    container.innerHTML = jobsHTML;
+  }
+
+  // Обработчики фильтров
+  document.addEventListener('DOMContentLoaded', function() {
+    // Загружаем данные
+    loadJobs();
+
+    // Платформы
+    document.querySelectorAll('.platform-filter').forEach(button => {
+      button.addEventListener('click', function() {
+        document.querySelectorAll('.platform-filter').forEach(btn => btn.classList.remove('active'));
+        this.classList.add('active');
+        currentPlatform = this.getAttribute('data-platform');
+        renderJobs();
+      });
+    });
+
+    // Категории
+    document.querySelectorAll('.category-filter').forEach(button => {
+      button.addEventListener('click', function() {
+        document.querySelectorAll('.category-filter').forEach(btn => btn.classList.remove('active'));
+        this.classList.add('active');
+        currentCategory = this.getAttribute('data-category');
+        renderJobs();
+      });
+    });
+  });
+</script>
+</body>
+</html>

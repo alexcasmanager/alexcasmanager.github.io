@@ -362,16 +362,34 @@
       const lines = text.trim().split('\n');
       
       // Пропускаем заголовок
+      const lines = text.trim().split('\n');
       const headers = lines[0].split('\t');
-      allJobs = lines.slice(1).map(line => {
-        const [category, url, description] = line.split('\t');
+      allJobs = lines.slice(1).map((line, index) => {
+        // Разделяем строку по табам и сразу триммируем все части
+        const parts = line.split('\t').map(part => part.trim());
+        
+        // Проверяем, что есть хотя бы категория и URL
+        if (parts.length < 2) {
+          console.error(`❌ Ошибка в строке ${index + 2}: "${line}" — меньше 2 колонок`);
+          return null; // Пропускаем эту строку
+        }
+      
+        const [category, url, description] = parts;
+      
+        // Проверяем, что категория и URL не пустые
+        if (!category || !url) {
+          console.error(`❌ Ошибка в строке ${index + 2}: "${line}" — пустая категория или URL`);
+          return null; // Пропускаем эту строку
+        }
+      
+        // Возвращаем объект с данными
         return {
-          category: category.trim(),
-          url: url.trim(),
-          description: description.trim(),
-          platform: detectPlatform(url.trim()) // Автоматически определяем платформу
+          category: category,
+          url: url,
+          description: description || 'Без описания', // Если описания нет — подставляем заглушку
+          platform: detectPlatform(url)
         };
-      });
+      }).filter(job => job !== null); // Удаляем все null (пропущенные строки)
 
       console.log('Загружено каналов:', allJobs.length);
       renderJobs(); // Рендерим сразу после загрузки
@@ -471,4 +489,5 @@
   });
 </script>
 </body>
+
 </html>

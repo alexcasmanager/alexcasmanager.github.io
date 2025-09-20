@@ -356,132 +356,44 @@
   let allJobs = []; // Будет заполнен после загрузки
 
   // УСИЛЕННАЯ ЗАГРУЗКА С АВТО-ОПРЕДЕЛЕНИЕМ КОДИРОВКИ
-  async function loadJobs() {
-    try {
-      const response = await fetch('jobs.tsv');
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+ // Загрузка данных из TSV
+async function loadJobs() {
+  try {
+    const response = await fetch('jobs.tsv');
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    
+    const text = await response.text();
+    const lines = text.trim().split('\n');
+    
+    // Пропускаем заголовок
+    const headers = lines[0].split('\t');
+    allJobs = lines.slice(1).map(line => {
+      const [category, url, description] = line.split('\t');
+      return {
+        // Исправленная строка: очищаем категорию от пробелов и обрамляющих кавычек
+        category: category.trim().replace(/^["'](.*)["']$/, '$1').trim(),
+        url: url.trim(),
+        description: description.trim(),
+        platform: detectPlatform(url.trim()) // Автоматически определяем платформу
+      };
+    });
 
-      // Читаем как сырые байты
-      const buffer = await response.arrayBuffer();
-      const uint8Array = new Uint8Array(buffer);
-
-      let text = "";
-      let detectedEncoding = "utf-8";
-
-      // 1. Проверяем BOM (Byte Order Mark)
-      if (uint8Array.length >= 2) {
-        const bom = (uint8Array[0] << 8) | uint8Array[1];
-
-        if (bom === 0xFEFF) {
-          // UTF-16BE
-          const decoder = new TextDecoder('utf-16be');
-          text = decoder.decode(uint8Array.slice(2));
-          detectedEncoding = "utf-16be";
-        } else if (bom === 0xFFFE) {
-          // UTF-16LE
-          const decoder = new TextDecoder('utf-16le');
-          text = decoder.decode(uint8Array.slice(2));
-          detectedEncoding = "utf-16le";
-        } else if (uint8Array.length >= 3 && 
-                   uint8Array[0] === 0xEF && 
-                   uint8Array[1] === 0xBB && 
-                   uint8Array[2] === 0xBF) {
-          // UTF-8 BOM
-          const decoder = new TextDecoder('utf-8');
-          text = decoder.decode(uint8Array.slice(3));
-          detectedEncoding = "utf-8";
-        } else {
-          // Нет BOM — пробуем разные варианты
-          try {
-            // Пробуем UTF-16LE — если видим \0 между символами
-            const decoder16 = new TextDecoder('utf-16le');
-            const test16 = decoder16.decode(uint8Array);
-            if (test16.length > 1 && test16[1] === '\0' && test16[0] !== '\0') {
-              text = test16;
-              detectedEncoding = "utf-16le";
-            } else {
-              // Пробуем UTF-8
-              const decoder8 = new TextDecoder('utf-8', { fatal: false }); // Не падать на ошибках!
-              text = decoder8.decode(uint8Array);
-              detectedEncoding = "utf-8";
-            }
-          } catch (e) {
-            // Fallback: UTF-8 с заменой невалидных символов
-            const decoder8 = new TextDecoder('utf-8', { fatal: false });
-            text = decoder8.decode(uint8Array);
-            detectedEncoding = "utf-8 (with replacement)";
-          }
-        }
-      } else {
-        // Маленький файл — просто UTF-8
-        const decoder = new TextDecoder('utf-8', { fatal: false });
-        text = decoder.decode(uint8Array);
-        detectedEncoding = "utf-8 (small file)";
-      }
-
-      console.log('✅ Обнаружена кодировка:', detectedEncoding);
-
-      // Убираем BOM, если остался в начале строки
-      if (text.charCodeAt(0) === 0xFEFF) {
-        text = text.slice(1);
-      }
-
-      // Убираем все нулевые байты и мусорные символы
-      text = text.replace(/\0/g, '').replace(/[^\x20-\x7E\u00A0-\uFFFF]/g, '');
-
-      // Парсим TSV
-      const lines = text.trim().split('\n');
-      if (lines.length < 1) {
-        throw new Error('Файл пуст или содержит только заголовок');
-      }
-
-      const headers = lines[0].split('\t');
-      allJobs = lines.slice(1).map((line, index) => {
-        // Разделяем строку по табам и сразу триммируем все части
-        const parts = line.split('\t').map(part => part.trim());
-
-        // Игнорируем пустые строки
-        if (parts.length === 1 && parts[0] === '') {
-          return null;
-        }
-
-        // Проверяем, что есть хотя бы категория и URL
-        if (parts.length < 2) {
-          console.warn(`⚠️ Пропущена строка ${index + 2}: "${line}" — меньше 2 колонок`);
-          return null;
-        }
-
-        const [category, url, description] = parts;
-
-        // Проверяем, что категория и URL не пустые
-        if (!category || !url) {
-          console.warn(`⚠️ Пропущена строка ${index + 2}: "${line}" — пустая категория или URL`);
-          return null;
-        }
-
-        // Возвращаем объект с данными
-        return {
-          category: category,
-          url: url,
-          description: description || 'Без описания',
-          platform: detectPlatform(url)
-        };
-      }).filter(job => job !== null);
-
-      console.log('✅ Загружено каналов:', allJobs.length);
-      renderJobs(); // Рендерим сразу после загрузки
-    } catch (error) {
-      console.error('❌ Ошибка загрузки jobs.tsv:', error);
-      document.getElementById('jobs-container').innerHTML = `
-        <div class="surface p-8 text-center">
-          <i class="fas fa-exclamation-triangle text-4xl text-red-400 mb-4"></i>
-          <h3 class="text-xl font-semibold text-gray-700 mb-2">Ошибка загрузки данных</h3>
-          <p class="text-gray-500">Не удалось загрузить список каналов. Проверьте файл <code>jobs.tsv</code>.</p>
-          <p class="text-sm text-red-500 mt-2">${error.message}</p>
-        </div>
-      `;
-    }
+    console.log('Загружено каналов:', allJobs.length);
+    // Добавим отладочную информацию, чтобы увидеть первые несколько категорий
+    console.log('Примеры категорий из данных:', allJobs.slice(0, 5).map(job => `"${job.category}"`));
+    renderJobs(); // Рендерим сразу после загрузки
+  } catch (error) {
+    console.error('Ошибка загрузки jobs.tsv:', error);
+    document.getElementById('jobs-container').innerHTML = `
+      <div class="surface p-8 text-center">
+        <i class="fas fa-exclamation-triangle text-4xl text-red-400 mb-4"></i>
+        <h3 class="text-xl font-semibold text-gray-700 mb-2">Ошибка загрузки данных</h3>
+        <p class="text-gray-500">Не удалось загрузить список каналов. Проверьте наличие файла <code>jobs.tsv</code>.</p>
+        <p class="text-sm text-red-500 mt-2">${error.message}</p>
+      </div>
+    `;
   }
+}
 
   // Рендер карточек
   function renderJobs() {
@@ -585,6 +497,7 @@
 </body>
 
 </html>
+
 
 
 

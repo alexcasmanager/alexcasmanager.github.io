@@ -352,44 +352,90 @@
   let currentCategory = 'all';
   let allJobs = []; // Будет заполнен после загрузки
 
-  // Загрузка данных из TSV
+  // Загрузка данных из TSV с автоопределением кодировки
   async function loadJobs() {
     try {
       const response = await fetch('jobs.tsv');
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      
-      const text = await response.text();
-      const lines = text.trim().split('\n');  // 👈 ТОЛЬКО ОДИН РАЗ!
-      
-      // Пропускаем заголовок
+  
+      // Читаем как бинарные данные
+      const buffer = await response.arrayBuffer();
+      const uint8Array = new Uint8Array(buffer);
+  
+      let decoder;
+      let offset = 0;
+  
+      // Проверяем BOM для определения кодировки
+      if (uint8Array.length >= 2) {
+        const bom = uint8Array[0] << 8 | uint8Array[1];
+        if (bom === 0xFEFF) {
+          // UTF-16BE BOM
+          decoder = new TextDecoder('utf-16be');
+          offset = 2;
+        } else if (bom === 0xFFFE) {
+          // UTF-16LE BOM
+          decoder = new TextDecoder('utf-16le');
+          offset = 2;
+        } else if (uint8Array.length >= 3 && 
+                   uint8Array[0] === 0xEF && 
+                   uint8Array[1] === 0xBB && 
+                   uint8Array[2] === 0xBF) {
+          // UTF-8 BOM
+          decoder = new TextDecoder('utf-8');
+          offset = 3;
+        } else {
+          // Нет BOM — пробуем UTF-8 по умолчанию
+          decoder = new TextDecoder('utf-8');
+        }
+      } else {
+        decoder = new TextDecoder('utf-8');
+      }
+  
+      // Декодируем текст
+      let text = decoder.decode(uint8Array.slice(offset));
+  
+      // Если текст всё ещё битый (символы с пробелами), пробуем UTF-16LE без BOM
+      if (text.length > 1 && text[1] === '\0' && text[0] !== '\0') {
+        console.warn('Обнаружена UTF-16LE без BOM — перекодируем...');
+        decoder = new TextDecoder('utf-16le');
+        text = decoder.decode(uint8Array);
+      }
+  
+      // Убираем возможный BOM в начале строки (если остался)
+      if (text.charCodeAt(0) === 0xFEFF) {
+        text = text.slice(1);
+      }
+  
+      // Парсим TSV как раньше
+      const lines = text.trim().split('\n');
       const headers = lines[0].split('\t');
       allJobs = lines.slice(1).map((line, index) => {
         // Разделяем строку по табам и сразу триммируем все части
         const parts = line.split('\t').map(part => part.trim());
-        
+  
         // Проверяем, что есть хотя бы категория и URL
         if (parts.length < 2) {
           console.error(`❌ Ошибка в строке ${index + 2}: "${line}" — меньше 2 колонок`);
-          return null; // Пропускаем эту строку
+          return null;
         }
-      
+  
         const [category, url, description] = parts;
-      
+  
         // Проверяем, что категория и URL не пустые
         if (!category || !url) {
           console.error(`❌ Ошибка в строке ${index + 2}: "${line}" — пустая категория или URL`);
-          return null; // Пропускаем эту строку
+          return null;
         }
-      
+  
         // Возвращаем объект с данными
         return {
           category: category,
           url: url,
-          description: description || 'Без описания', // Если описания нет — подставляем заглушку
+          description: description || 'Без описания',
           platform: detectPlatform(url)
         };
-      }).filter(job => job !== null); // Удаляем все null (пропущенные строки)
-
+      }).filter(job => job !== null);
+  
       console.log('Загружено каналов:', allJobs.length);
       renderJobs(); // Рендерим сразу после загрузки
     } catch (error) {
@@ -490,4 +536,5 @@
 </body>
 
 </html>
+
 

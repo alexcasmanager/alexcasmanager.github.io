@@ -223,13 +223,19 @@
     <img src="neuro.jpg" alt="Лучшие ИИ-инструменты 2025" class="article-hero">
 Объявление: поиск работы -->
 <div class="job-announcement" style="
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  border: 2px solid var(--fb-blue);
   border-radius: 16px;
-  padding: 12px;
+  padding: 24px;
   text-align: center;
   margin: 5px auto;
   max-width: 800px;
+  box-shadow: 0 6px 20px rgba(24, 119, 242, 0.1);
   position: relative;
   overflow: hidden;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
 ">
 
   <a href="index.html" class="resume-btn" style="
@@ -243,7 +249,27 @@
     font-size: 16px;
     transition: all 0.25s ease;
     box-shadow: 0 4px 12px rgba(24, 119, 242, 0.2);
+    text-align: center;
   ">👉 Резюме и портфолио</a>
+
+  <a href="/ai_tools.xlsx"
+     download="ai_tools.xlsx"
+     class="resume-btn" style="
+       display: inline-block;
+       padding: 14px 36px;
+       background: var(--accent-gradient);
+       color: white;
+       border-radius: 10px;
+       font-weight: 600;
+       text-decoration: none;
+       font-size: 16px;
+       transition: all 0.25s ease;
+       box-shadow: 0 4px 12px rgba(24, 119, 242, 0.2);
+       text-align: center;
+     ">
+    <i class="fa-solid fa-download" aria-hidden="true"></i> Скачать список нейронок
+  </a>
+
 </div>
     <!-- Заголовок и введение --><br>
     <h1 class="article-title">Лучшие ИИ-инструменты по категориям</h1>
@@ -903,6 +929,7 @@
 </body>
 
 </html>
+
 
 
 
